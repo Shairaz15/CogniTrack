@@ -1,9 +1,13 @@
+import numpy as np
+# Monkey patch for legacy compatibility
+np.object = object
+np.bool = bool
+
 import tensorflow as tf
 from tensorflow import keras
 from tensorflow.keras import layers
-import numpy as np
 import os
-import tensorflowjs as tfjs
+# import tensorflowjs as tfjs
 
 # Load Data
 data = np.load("training_data.npz")
@@ -49,9 +53,13 @@ history = model.fit(
 )
 
 # Save Model
-model_dir = "../src/models/trend-cnn"
+model_dir = "../public/models/trend-cnn"
 os.makedirs(model_dir, exist_ok=True)
 
 # Export to TFJS
-tfjs.converters.save_keras_model(model, model_dir)
-print(f"Model saved to {model_dir}")
+# tfjs.converters.save_keras_model(model, model_dir)
+# print(f"Model saved to {model_dir}")
+
+# Save as Keras format as backup
+model.save("trend_model.keras")
+print("Saved trend_model.keras")

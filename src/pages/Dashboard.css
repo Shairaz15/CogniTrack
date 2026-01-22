@@ -252,12 +252,86 @@
     background: var(--color-surface-hover);
 }
 
-/* Actions */
 .dashboard-actions {
     display: flex;
     justify-content: center;
 }
 
+/* Simulation Controls */
+.simulation-controls {
+    margin-bottom: var(--spacing-xl);
+    background: linear-gradient(135deg,
+            rgba(52, 211, 153, 0.05) 0%,
+            rgba(56, 189, 248, 0.05) 100%);
+    border: 1px solid rgba(52, 211, 153, 0.2);
+}
+
+.simulation-buttons {
+    display: flex;
+    gap: var(--spacing-md);
+    flex-wrap: wrap;
+    margin-bottom: var(--spacing-md);
+}
+
+.simulation-buttons .clear-data-btn {
+    background: rgba(239, 68, 68, 0.1);
+    color: #ef4444;
+    border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+.simulation-buttons .clear-data-btn:hover {
+    background: rgba(239, 68, 68, 0.2);
+}
+
+.simulation-buttons .simulate-decline-btn {
+    background: rgba(251, 191, 36, 0.1);
+    color: #fbbf24;
+    border: 1px solid rgba(251, 191, 36, 0.3);
+}
+
+.simulation-buttons .simulate-decline-btn:hover {
+    background: rgba(251, 191, 36, 0.2);
+}
+
+.simulation-buttons .simulate-stable-btn {
+    background: rgba(52, 211, 153, 0.1);
+    color: #34d399;
+    border: 1px solid rgba(52, 211, 153, 0.3);
+}
+
+.simulation-buttons .simulate-stable-btn:hover {
+    background: rgba(52, 211, 153, 0.2);
+}
+
+.simulation-hint {
+    font-size: var(--font-size-sm);
+    color: var(--color-text-muted);
+    margin: 0;
+}
+
+/* Direction Tags for Trend Analysis */
+.direction-tag {
+    font-weight: var(--font-weight-semibold);
+    text-transform: capitalize;
+}
+
+.direction-tag.declining {
+    background: rgba(248, 113, 113, 0.15);
+    color: #f87171;
+    border: 1px solid rgba(248, 113, 113, 0.3);
+}
+
+.direction-tag.improving {
+    background: rgba(52, 211, 153, 0.15);
+    color: #34d399;
+    border: 1px solid rgba(52, 211, 153, 0.3);
+}
+
+.direction-tag.stable {
+    background: rgba(148, 163, 184, 0.15);
+    color: #94a3b8;
+    border: 1px solid rgba(148, 163, 184, 0.3);
+}
 
 /* ML Insight Card */
 .ml-insight-card {

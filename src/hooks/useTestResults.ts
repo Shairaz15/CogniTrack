@@ -9,13 +9,24 @@ import type { ReactionTestResult } from "../components/tests/reaction/reactionFe
 import type { PatternAssessmentResult } from "../types/patternTypes";
 import type { LanguageAssessmentResult } from "../types/languageTypes";
 
-const STORAGE_KEYS = {
+export const STORAGE_KEYS = {
     reactionResults: "cognitrack_reaction_results",
     memoryResults: "cognitrack_memory_results",
     patternResults: "cognitrack_pattern_results",
     languageResults: "cognitrack_language_results",
     lastSession: "cognitrack_last_session",
 };
+
+/**
+ * Clears all test data from localStorage.
+ */
+export function clearAllTestData(): void {
+    localStorage.removeItem(STORAGE_KEYS.reactionResults);
+    localStorage.removeItem(STORAGE_KEYS.memoryResults);
+    localStorage.removeItem(STORAGE_KEYS.patternResults);
+    localStorage.removeItem(STORAGE_KEYS.languageResults);
+    localStorage.removeItem(STORAGE_KEYS.lastSession);
+}
 
 // ... existing interfaces ...
 

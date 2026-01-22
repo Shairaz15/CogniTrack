@@ -10,22 +10,14 @@ import {
 } from "recharts";
 import { Card, CardHeader, CardContent, RiskBadge, Button } from "../components/common";
 import { PageWrapper } from "../components/layout";
-import { DEMO_SESSIONS, getDemoSessionDataPoints, DEMO_USER } from "../demo";
-import { useMemoryResults, usePatternResults, useLanguageResults } from "../hooks/useTestResults";
-import { analyzeTrends } from "../ai/trendAnalyzer";
-import { detectAnomalies, createBaseline } from "../ai/anomalyDetector";
-import { computeRisk } from "../ai/riskEngine";
+import { useMemoryResults, usePatternResults, useLanguageResults, clearAllTestData, STORAGE_KEYS } from "../hooks/useTestResults";
+import { generateSimulatedData, hasBaseline } from "../utils/simulateUserData";
 import { predictTrend } from "../ml";
 import type { TrendPrediction } from "../ml";
 import type { ReactionTestResult } from "../components/tests/reaction/reactionFeatures";
 import "./Dashboard.css";
 
 export function Dashboard() {
-    // Toggle between demo mode and real data
-    const [showDemoData, setShowDemoData] = useState(() => {
-        return sessionStorage.getItem("demoMode") === "true";
-    });
-
     // Load test results
     const [reactionResults, setReactionResults] = useState<ReactionTestResult[]>([]);
     const { results: memoryResults } = useMemoryResults();
@@ -35,9 +27,10 @@ export function Dashboard() {
     // ML Prediction State
     const [mlPrediction, setMlPrediction] = useState<TrendPrediction | null>(null);
 
+    // Load reaction results from localStorage
     useEffect(() => {
         try {
-            const stored = localStorage.getItem("cognitrack_reaction_results");
+            const stored = localStorage.getItem(STORAGE_KEYS.reactionResults);
             if (stored) {
                 const parsed = JSON.parse(stored) as ReactionTestResult[];
                 const withDates = parsed.map((r) => ({
@@ -51,76 +44,65 @@ export function Dashboard() {
         }
     }, []);
 
-    // Toggle demo mode
-    const toggleDemoMode = () => {
-        setShowDemoData((prev) => {
-            const newValue = !prev;
-            sessionStorage.setItem("demoMode", String(newValue));
-            return newValue;
-        });
+    // Refresh data from localStorage (used after simulation)
+    const refreshData = () => {
+        window.location.reload();
     };
 
-    // Determine data source
-    const hasUserData = reactionResults.length > 0 || memoryResults.length > 0 || patternResults.length > 0 || languageResults.length > 0;
-    const sessions = DEMO_SESSIONS;
-    const sessionDataPoints = getDemoSessionDataPoints();
-
-    // Fetch ML Prediction (Async)
-    // Fetch ML Prediction (Async)
-    useEffect(() => {
-        let mounted = true;
-        async function fetchML() {
-            // Debug logs
-            console.log('fetchML triggered. showDemoData:', showDemoData);
-            console.log('Session count:', sessions.length);
-
-            if (sessions.length >= 3) {
-                console.log('Calling predictTrend with sessions:', sessionDataPoints);
-                try {
-                    const pred = await predictTrend(sessionDataPoints);
-                    console.log('ML Prediction received:', pred);
-                    if (mounted) {
-                        setMlPrediction(pred);
-                        console.log('mlPrediction state updated');
-                    }
-                } catch (err) {
-                    console.error('Error in predictTrend:', err);
-                }
-            } else {
-                console.warn('Not enough sessions for ML:', sessions.length);
-            }
+    // Handle Clear All Data
+    const handleClearData = () => {
+        if (window.confirm("Are you sure you want to delete ALL test data? This cannot be undone.")) {
+            clearAllTestData();
+            refreshData();
         }
-        if (showDemoData) fetchML();
+    };
 
-        return () => { mounted = false; };
-    }, [sessions, sessionDataPoints, showDemoData]);
+    // Handle Simulate Data
+    const handleSimulateData = (pattern: "stable" | "declining") => {
+        const baseline = {
+            reaction: reactionResults.length > 0 ? reactionResults[0] : undefined,
+            memory: memoryResults.length > 0 ? memoryResults[0] : undefined,
+            pattern: patternResults.length > 0 ? patternResults[0] : undefined,
+            language: languageResults.length > 0 ? languageResults[0] : undefined,
+        };
 
-    // Calculate risk analysis from demo data
-    const riskAnalysis = useMemo(() => {
-        if (sessions.length < 2) return null;
+        if (!hasBaseline(baseline)) {
+            alert("Please take at least one test first to establish a baseline.");
+            return;
+        }
 
-        const allFeatures = sessions.map((s) => s.features);
-        const baseline = createBaseline(allFeatures.slice(0, 2));
-        const latestFeatures = sessions[sessions.length - 1].features;
-        const slopes = analyzeTrends(sessionDataPoints);
-        const anomaly = detectAnomalies(latestFeatures, allFeatures.slice(0, -1));
+        const simulated = generateSimulatedData(baseline, pattern);
 
-        return computeRisk(latestFeatures, baseline, slopes, anomaly, mlPrediction);
-    }, [sessions, sessionDataPoints, mlPrediction]);
+        // Append simulated data to localStorage
+        try {
+            if (simulated.reaction.length > 0) {
+                const existing = JSON.parse(localStorage.getItem(STORAGE_KEYS.reactionResults) || "[]");
+                localStorage.setItem(STORAGE_KEYS.reactionResults, JSON.stringify([...existing, ...simulated.reaction]));
+            }
+            if (simulated.memory.length > 0) {
+                const existing = JSON.parse(localStorage.getItem(STORAGE_KEYS.memoryResults) || "[]");
+                localStorage.setItem(STORAGE_KEYS.memoryResults, JSON.stringify([...existing, ...simulated.memory]));
+            }
+            if (simulated.pattern.length > 0) {
+                const existing = JSON.parse(localStorage.getItem(STORAGE_KEYS.patternResults) || "[]");
+                localStorage.setItem(STORAGE_KEYS.patternResults, JSON.stringify([...existing, ...simulated.pattern]));
+            }
+            if (simulated.language.length > 0) {
+                const existing = JSON.parse(localStorage.getItem(STORAGE_KEYS.languageResults) || "[]");
+                localStorage.setItem(STORAGE_KEYS.languageResults, JSON.stringify([...existing, ...simulated.language]));
+            }
+            refreshData();
+        } catch (error) {
+            console.error("Failed to save simulated data:", error);
+            alert("Failed to simulate data. Please try again.");
+        }
+    };
 
-    // Prepare chart data for demo sessions
-    const demoChartData = sessions.map((session, index) => ({
-        name: `Session ${index + 1}`,
-        date: session.timestamp.toLocaleDateString(),
-        memory: Math.round(session.features.memoryAccuracy * 100),
-        reaction: Math.round(session.features.reactionTimeAvg),
-        pattern: session.features.patternScore,
-        speech: Math.round(session.features.speechWPM),
-        isReal: false,
-    }));
+    // Determine if user has data
+    const hasUserData = reactionResults.length > 0 || memoryResults.length > 0 || patternResults.length > 0 || languageResults.length > 0;
 
-    // Prepare unified chart data for real user
-    const realChartData = useMemo(() => {
+    // Prepare chart data
+    const chartData = useMemo(() => {
         const allDates = new Set<string>();
         reactionResults.forEach(r => allDates.add(new Date(r.timestamp).toDateString()));
         memoryResults.forEach(m => allDates.add(new Date(m.timestamp).toDateString()));
@@ -130,13 +112,11 @@ export function Dashboard() {
         const sortedDates = Array.from(allDates).sort((a, b) => new Date(a).getTime() - new Date(b).getTime());
 
         return sortedDates.map((dateStr, index) => {
-            // Find the *latest* result for this date (since arrays are appended, reverse search or filter+pop)
             const reaction = reactionResults.filter(r => new Date(r.timestamp).toDateString() === dateStr).pop();
             const memory = memoryResults.filter(m => new Date(m.timestamp).toDateString() === dateStr).pop();
             const pattern = patternResults.filter(p => new Date(p.timestamp).toDateString() === dateStr).pop();
             const language = languageResults.filter(l => new Date(l.timestamp).toDateString() === dateStr).pop();
 
-            // Normalized Pattern Score: Max Level * 10 (e.g. Lvl 5 = 50%, Lvl 10=100%)
             const patternScore = pattern ? Math.min(pattern.metrics.maxLevelReached * 10, 100) : null;
 
             return {
@@ -146,21 +126,54 @@ export function Dashboard() {
                 reaction: reaction ? Math.round(reaction.aggregates.avg) : null,
                 pattern: patternScore,
                 speech: language ? Math.round(language.derivedFeatures.wpm) : null,
-                isReal: true,
             };
         });
     }, [reactionResults, memoryResults, patternResults, languageResults]);
 
-    const activeChartData = showDemoData ? demoChartData : realChartData;
+    // Fetch ML Prediction when enough data
+    useEffect(() => {
+        let mounted = true;
+        async function fetchML() {
+            if (chartData.length >= 3) {
+                // Build features for ML model
+                const dataPoints = chartData.map((session, index) => ({
+                    timestamp: new Date().getTime() - (chartData.length - index - 1) * 7 * 24 * 60 * 60 * 1000,
+                    features: {
+                        memoryAccuracy: (session.memory || 70) / 100,
+                        reactionTimeAvg: session.reaction || 350,
+                        reactionTimeVariance: 500,
+                        patternScore: session.pattern || 50,
+                        speechWPM: session.speech || 120,
+                        lexicalDiversity: 0.6,
+                        fillerWordRatio: 0.05,
+                        hesitationMarkers: 2,
+                    }
+                }));
 
-    // Common Chart Component
+                try {
+                    const pred = await predictTrend(dataPoints);
+                    if (mounted) {
+                        setMlPrediction(pred);
+                    }
+                } catch (err) {
+                    console.error('Error in predictTrend:', err);
+                }
+            } else {
+                if (mounted) setMlPrediction(null);
+            }
+        }
+        fetchML();
+        return () => { mounted = false; };
+    }, [chartData]);
+
+    // Chart Component
     const renderChart = (title: string, subtitle: string, dataKey: string, color: string, domain: [number | 'auto', number | 'auto'] = ['auto', 'auto'], unit: string = "") => (
         <Card className="chart-card">
             <CardHeader title={title} subtitle={subtitle} />
             <CardContent>
                 <div className="chart-container">
                     <ResponsiveContainer width="100%" height={200}>
-                        <LineChart data={activeChartData}>
+                        <LineChart data={chartData}>
                             <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
                             <XAxis dataKey="name" stroke="#64748b" fontSize={12} />
                             <YAxis domain={domain} stroke="#64748b" fontSize={12} />
@@ -170,7 +183,7 @@ export function Dashboard() {
                                     border: "1px solid rgba(255,255,255,0.1)",
                                     borderRadius: "8px",
                                 }}
-                                formatter={(value: any) => [value + unit, title]}
+                                formatter={(value: number) => [value + unit, title]}
                             />
                             <Line
                                 connectNulls
@@ -195,23 +208,91 @@ export function Dashboard() {
                     <div>
                         <h1>Performance Dashboard</h1>
                         <p className="text-secondary">
-                            {showDemoData
-                                ? `Demo User: ${DEMO_USER.name}`
-                                : "Track your cognitive performance trends over time"}
+                            Track your cognitive performance trends over time
                         </p>
                     </div>
-                    <button
-                        className={`mode-toggle ${showDemoData ? "demo-active" : "real-active"}`}
-                        onClick={toggleDemoMode}
-                    >
-                        {showDemoData ? "Demo Mode" : "Your Data"}
-                    </button>
                 </div>
 
+                {/* Simulation Controls - Always visible */}
+                <Card className="simulation-controls">
+                    <CardHeader
+                        title="Data Controls"
+                        subtitle="Take a test to establish baseline, then simulate trends"
+                    />
+                    <CardContent>
+                        <div className="simulation-buttons">
+                            <Button
+                                variant="secondary"
+                                onClick={handleClearData}
+                                className="clear-data-btn"
+                            >
+                                🗑️ Clear All Data
+                            </Button>
+                            <Button
+                                variant="primary"
+                                onClick={() => handleSimulateData("declining")}
+                                className="simulate-decline-btn"
+                            >
+                                📉 + Declining (5 sessions)
+                            </Button>
+                            <Button
+                                variant="primary"
+                                onClick={() => handleSimulateData("stable")}
+                                className="simulate-stable-btn"
+                            >
+                                📊 + Stable (5 sessions)
+                            </Button>
+                        </div>
+                        <p className="simulation-hint">
+                            {hasUserData
+                                ? `ℹ️ ${chartData.length} session(s) recorded. Add simulated sessions to see trend analysis.`
+                                : "⚠️ Take at least one test first to establish your baseline."}
+                        </p>
+                    </CardContent>
+                </Card>
 
+                {/* Your Trend Analysis - Shows when 3+ sessions and ML prediction exists */}
+                {chartData.length >= 3 && mlPrediction && (
+                    <Card className="risk-summary animate-fadeIn">
+                        <div className="risk-summary-header">
+                            <div>
+                                <h2>Your Trend Analysis</h2>
+                                <RiskBadge level={
+                                    mlPrediction.direction === 'declining' ? 'possible_risk' :
+                                        mlPrediction.direction === 'improving' ? 'stable' : 'change_detected'
+                                } />
+                            </div>
+                            <div className="risk-confidence">
+                                <span className="label">ML Confidence</span>
+                                <span className="value">
+                                    {Math.round(mlPrediction.confidence * 100)}%
+                                </span>
+                            </div>
+                        </div>
+                        <p className="risk-message">
+                            {mlPrediction.direction === 'declining'
+                                ? "Possible cognitive performance variation detected. This does not indicate a diagnosis but may suggest seeking professional advice for peace of mind."
+                                : mlPrediction.direction === 'improving'
+                                    ? "Your cognitive performance appears to be improving. Keep up the great work!"
+                                    : "Your performance appears stable with no significant changes detected."}
+                        </p>
+                        <div className="risk-factors">
+                            <span className="factors-label">Trend detected:</span>
+                            <div className="factors-list">
+                                <span className={`factor-tag direction-tag ${mlPrediction.direction}`}>
+                                    {mlPrediction.direction === 'improving' ? '↗' :
+                                        mlPrediction.direction === 'declining' ? '↘' : '↔'} {mlPrediction.direction}
+                                </span>
+                                <span className="factor-tag">
+                                    {chartData.length} sessions analyzed
+                                </span>
+                            </div>
+                        </div>
+                    </Card>
+                )}
 
                 {/* No data message */}
-                {!showDemoData && !hasUserData && (
+                {!hasUserData && (
                     <Card className="no-data-card">
                         <CardContent>
                             <div className="no-data-message">
@@ -226,80 +307,8 @@ export function Dashboard() {
                     </Card>
                 )}
 
-                {/* Risk Summary (Demo Only) */}
-                {showDemoData && riskAnalysis && (
-                    <Card className="risk-summary animate-fadeIn">
-                        <div className="risk-summary-header">
-                            <div>
-                                <h2>Demo Trend Analysis</h2>
-                                <RiskBadge level={riskAnalysis.riskLevel} />
-                            </div>
-                            <div className="risk-confidence">
-                                <span className="label">Confidence</span>
-                                <span className="value">
-                                    {Math.round(riskAnalysis.riskConfidenceScore * 100)}%
-                                </span>
-                            </div>
-                        </div>
-                        <p className="risk-message">{riskAnalysis.riskMessage}</p>
-                        {riskAnalysis.topFactors.length > 0 && (
-                            <div className="risk-factors">
-                                <span className="factors-label">Contributing factors:</span>
-                                <div className="factors-list">
-                                    {riskAnalysis.topFactors.map((factor, i) => (
-                                        <span key={i} className="factor-tag">
-                                            {factor}
-                                        </span>
-                                    ))}
-                                </div>
-                            </div>
-                        )}
-                    </Card>
-                )}
-
-                {riskAnalysis?.mlPrediction && riskAnalysis.mlPrediction.confidence > 0.6 && (
-                    <Card className="ml-insight-card animate-fadeIn">
-                        <CardHeader
-                            title="ML Trend Analysis"
-                            subtitle="Probabilistic pattern estimation (Beta)"
-                        />
-                        <CardContent>
-                            <div className="ml-insight-grid">
-                                <div className="ml-metric">
-                                    <span className="label">Trend Direction</span>
-                                    <div className="value-row">
-                                        <span className={`direction-icon ${riskAnalysis.mlPrediction.direction}`}>
-                                            {riskAnalysis.mlPrediction.direction === 'improving' ? '↗' :
-                                                riskAnalysis.mlPrediction.direction === 'declining' ? '↘' : '↔'}
-                                        </span>
-                                        <span className="direction-text">
-                                            {riskAnalysis.mlPrediction.direction.charAt(0).toUpperCase() + riskAnalysis.mlPrediction.direction.slice(1)}
-                                        </span>
-                                    </div>
-                                </div>
-                                <div className="ml-metric">
-                                    <span className="label">Model Confidence</span>
-                                    <div className="confidence-meter">
-                                        <div
-                                            className="confidence-fill"
-                                            style={{ width: `${Math.round(riskAnalysis.mlPrediction.confidence * 100)}%` }}
-                                        />
-                                    </div>
-                                    <span className="confidence-text">{Math.round(riskAnalysis.mlPrediction.confidence * 100)}%</span>
-                                </div>
-                            </div>
-                            <div className="ml-disclaimer">
-                                <small>
-                                    ℹ️ ML insights are probabilistic estimates based on your previous 6 sessions.
-                                    They do not constitute a medical diagnosis.
-                                </small>
-                            </div>
-                        </CardContent>
-                    </Card>
-                )}
-
-                {/* Main Charts Grid - For both Real and Demo data */}
-                {(showDemoData || hasUserData) && (
+                {/* Charts Grid */}
+                {hasUserData && (
                     <div className="charts-grid">
                         {renderChart("Memory Accuracy", "% correct recall", "memory", "#34d399", [0, 100], "%")}
                         {renderChart("Reaction Time", "Average response (ms)", "reaction", "#fbbf24", ['auto', 'auto'], "ms")}
@@ -308,8 +317,8 @@ export function Dashboard() {
                     </div>
                 )}
 
-                {/* Session History Table - For both Demo and Real Data */}
-                {(showDemoData || hasUserData) && (
+                {/* Session History Table */}
+                {hasUserData && (
                     <Card className="session-history">
                         <CardHeader title="Session History" subtitle="Recent cognitive assessments" />
                         <CardContent>
@@ -325,7 +334,7 @@ export function Dashboard() {
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        {activeChartData.slice().reverse().map((session, i) => (
+                                        {chartData.slice().reverse().map((session, i) => (
                                             <tr key={i}>
                                                 <td>{session.date}</td>
                                                 <td>{session.memory ? `${session.memory}%` : '-'}</td>
