@@ -27,7 +27,7 @@ export const DEMO_SESSIONS: DemoSession[] = [
             memoryAccuracy: 0.86,
             reactionTimeAvg: 315,
             reactionTimeVariance: 450,
-            patternScore: 0.92,
+            patternScore: 92, // High baseline (Level 9.2)
             speechWPM: 145,
             lexicalDiversity: 0.74,
             fillerWordRatio: 0.02,
@@ -42,7 +42,7 @@ export const DEMO_SESSIONS: DemoSession[] = [
             memoryAccuracy: 0.84,
             reactionTimeAvg: 325,
             reactionTimeVariance: 480,
-            patternScore: 0.88,
+            patternScore: 88, // Stable
             speechWPM: 138,
             lexicalDiversity: 0.71,
             fillerWordRatio: 0.03,
@@ -57,7 +57,7 @@ export const DEMO_SESSIONS: DemoSession[] = [
             memoryAccuracy: 0.78,
             reactionTimeAvg: 345,
             reactionTimeVariance: 520,
-            patternScore: 0.82,
+            patternScore: 82, // Slight drop
             speechWPM: 125,
             lexicalDiversity: 0.65,
             fillerWordRatio: 0.05,
@@ -72,7 +72,7 @@ export const DEMO_SESSIONS: DemoSession[] = [
             memoryAccuracy: 0.72,
             reactionTimeAvg: 380,
             reactionTimeVariance: 600,
-            patternScore: 0.75,
+            patternScore: 75, // Noticeable drop
             speechWPM: 115,
             lexicalDiversity: 0.58,
             fillerWordRatio: 0.07,
@@ -87,7 +87,7 @@ export const DEMO_SESSIONS: DemoSession[] = [
             memoryAccuracy: 0.65,
             reactionTimeAvg: 420,
             reactionTimeVariance: 750,
-            patternScore: 0.68,
+            patternScore: 68, // Significant decline
             speechWPM: 100,
             lexicalDiversity: 0.52,
             fillerWordRatio: 0.09,
@@ -102,7 +102,7 @@ export const DEMO_SESSIONS: DemoSession[] = [
             memoryAccuracy: 0.58,
             reactionTimeAvg: 460,
             reactionTimeVariance: 900,
-            patternScore: 0.60,
+            patternScore: 60, // Risk level
             speechWPM: 88,
             lexicalDiversity: 0.45,
             fillerWordRatio: 0.12,

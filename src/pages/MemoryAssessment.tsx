@@ -11,6 +11,7 @@ import { Card, Button } from '../components/common';
 import { PageWrapper } from '../components/layout';
 import { selectRandomWords } from '../data/wordPools';
 import { extractMemoryFeatures, computeMemoryProfile, identifyKeyFactors } from '../ai/memoryFeatures';
+import { useMemoryResults } from '../hooks/useTestResults';
 import type { AssessmentPhase, RawMemoryMetrics, MemoryFeatures, MemoryProfile } from '../types/memoryTypes';
 import './MemoryAssessment.css';
 
@@ -47,6 +48,9 @@ export function MemoryAssessment() {
     const [features, setFeatures] = useState<MemoryFeatures | null>(null);
     const [profile, setProfile] = useState<MemoryProfile | null>(null);
     const [keyFactors, setKeyFactors] = useState<string[]>([]);
+
+    // Storage hook
+    const { saveResult } = useMemoryResults();
 
     // Initialize words when starting encoding
     const startEncoding = useCallback(() => {
@@ -179,6 +183,15 @@ export function MemoryAssessment() {
 
         const factors = identifyKeyFactors(rawMetrics, extractedFeatures);
         setKeyFactors(factors);
+
+        // Save results
+        const accuracy = rawMetrics.correctCount / WORD_COUNT;
+        saveResult({
+            timestamp: new Date(),
+            totalWords: WORD_COUNT,
+            correctCount: rawMetrics.correctCount,
+            accuracy,
+        });
 
         // Brief pause on scoring, then show completion
         setTimeout(() => {

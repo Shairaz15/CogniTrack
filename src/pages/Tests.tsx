@@ -50,7 +50,11 @@ export function Tests() {
     const [selectedTest, setSelectedTest] = useState<TestType | null>(null);
 
     const handleStartTest = (testId: TestType) => {
-        navigate(`/test/${testId}`);
+        if (testId === "pattern") {
+            navigate(`/tests/pattern`);
+        } else {
+            navigate(`/test/${testId}`);
+        }
     };
 
     return (

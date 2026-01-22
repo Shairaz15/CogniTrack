@@ -11,6 +11,7 @@ import {
 import { Card, CardHeader, CardContent, RiskBadge, Button } from "../components/common";
 import { PageWrapper } from "../components/layout";
 import { DEMO_SESSIONS, getDemoSessionDataPoints, DEMO_USER } from "../demo";
+import { useMemoryResults, usePatternResults, useLanguageResults } from "../hooks/useTestResults";
 import { analyzeTrends } from "../ai/trendAnalyzer";
 import { detectAnomalies, createBaseline } from "../ai/anomalyDetector";
 import { computeRisk } from "../ai/riskEngine";
@@ -23,8 +24,11 @@ export function Dashboard() {
         return sessionStorage.getItem("demoMode") === "true";
     });
 
-    // Load reaction test results from localStorage
+    // Load test results
     const [reactionResults, setReactionResults] = useState<ReactionTestResult[]>([]);
+    const { results: memoryResults } = useMemoryResults();
+    const { results: patternResults } = usePatternResults();
+    const { results: languageResults } = useLanguageResults();
 
     useEffect(() => {
         try {
@@ -52,7 +56,7 @@ export function Dashboard() {
     };
 
     // Determine data source
-    const hasUserData = reactionResults.length > 0;
+    const hasUserData = reactionResults.length > 0 || memoryResults.length > 0 || patternResults.length > 0 || languageResults.length > 0;
     const sessions = DEMO_SESSIONS;
     const sessionDataPoints = getDemoSessionDataPoints();
 
@@ -70,26 +74,83 @@ export function Dashboard() {
     }, [sessions, sessionDataPoints]);
 
     // Prepare chart data for demo sessions
-    const chartData = sessions.map((session, index) => ({
+    const demoChartData = sessions.map((session, index) => ({
         name: `Session ${index + 1}`,
         date: session.timestamp.toLocaleDateString(),
         memory: Math.round(session.features.memoryAccuracy * 100),
         reaction: Math.round(session.features.reactionTimeAvg),
         pattern: Math.round(session.features.patternScore * 100),
         speech: Math.round(session.features.speechWPM),
+        isReal: false,
     }));
 
-    // Prepare chart data for user's reaction test results
-    const userReactionChartData = reactionResults.map((result, index) => ({
-        name: `Test ${index + 1}`,
-        date: new Date(result.timestamp).toLocaleDateString(),
-        avgReaction: result.aggregates.avg,
-        consistency: Math.round(result.aggregates.consistencyScore * 100),
-        fatigueSlope: result.aggregates.fatigueSlope,
-    }));
+    // Prepare unified chart data for real user
+    const realChartData = useMemo(() => {
+        const allDates = new Set<string>();
+        reactionResults.forEach(r => allDates.add(new Date(r.timestamp).toDateString()));
+        memoryResults.forEach(m => allDates.add(new Date(m.timestamp).toDateString()));
+        patternResults.forEach(p => allDates.add(new Date(p.timestamp).toDateString()));
+        languageResults.forEach(l => allDates.add(new Date(l.timestamp).toDateString()));
 
-    // Get latest user reaction result
-    const latestReaction = reactionResults.length > 0 ? reactionResults[reactionResults.length - 1] : null;
+        const sortedDates = Array.from(allDates).sort((a, b) => new Date(a).getTime() - new Date(b).getTime());
+
+        return sortedDates.map((dateStr, index) => {
+            const reaction = reactionResults.find(r => new Date(r.timestamp).toDateString() === dateStr);
+            const memory = memoryResults.find(m => new Date(m.timestamp).toDateString() === dateStr);
+            const pattern = patternResults.find(p => new Date(p.timestamp).toDateString() === dateStr);
+            const language = languageResults.find(l => new Date(l.timestamp).toDateString() === dateStr);
+
+            // Normalized Pattern Score: Max Level * 10 (e.g. Lvl 5 = 50%, Lvl 10=100%)
+            const patternScore = pattern ? Math.min(pattern.metrics.maxLevelReached * 10, 100) : null;
+
+            return {
+                name: `Session ${index + 1}`,
+                date: new Date(dateStr).toLocaleDateString('en-GB'),
+                memory: memory ? Math.round(memory.accuracy * 100) : null,
+                reaction: reaction ? Math.round(reaction.aggregates.avg) : null,
+                pattern: patternScore,
+                speech: language ? Math.round(language.derivedFeatures.wpm) : null,
+                isReal: true,
+            };
+        });
+    }, [reactionResults, memoryResults, patternResults, languageResults]);
+
+    const activeChartData = showDemoData ? demoChartData : realChartData;
+
+    // Common Chart Component
+    const renderChart = (title: string, subtitle: string, dataKey: string, color: string, domain: [number | 'auto', number | 'auto'] = ['auto', 'auto'], unit: string = "") => (
+        <Card className="chart-card">
+            <CardHeader title={title} subtitle={subtitle} />
+            <CardContent>
+                <div className="chart-container">
+                    <ResponsiveContainer width="100%" height={200}>
+                        <LineChart data={activeChartData}>
+                            <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
+                            <XAxis dataKey="name" stroke="#64748b" fontSize={12} />
+                            <YAxis domain={domain} stroke="#64748b" fontSize={12} />
+                            <Tooltip
+                                contentStyle={{
+                                    backgroundColor: "#1e293b",
+                                    border: "1px solid rgba(255,255,255,0.1)",
+                                    borderRadius: "8px",
+                                }}
+                                formatter={(value: any) => [value + unit, title]}
+                            />
+                            <Line
+                                connectNulls
+                                type="monotone"
+                                dataKey={dataKey}
+                                stroke={color}
+                                strokeWidth={2}
+                                dot={{ fill: color }}
+                                activeDot={{ r: 6 }}
+                            />
+                        </LineChart>
+                    </ResponsiveContainer>
+                </div>
+            </CardContent>
+        </Card>
+    );
 
     return (
         <PageWrapper>
@@ -111,44 +172,9 @@ export function Dashboard() {
                     </button>
                 </div>
 
-                {/* User's Reaction Test Results - Only show if not in demo mode and user has data */}
-                {!showDemoData && hasUserData && latestReaction && (
-                    <Card className="user-results animate-fadeIn">
-                        <CardHeader
-                            title="⚡ Your Latest Reaction Assessment"
-                            subtitle={`Completed ${new Date(latestReaction.timestamp).toLocaleDateString()}`}
-                        />
-                        <CardContent>
-                            <div className="user-stats-grid">
-                                <div className="stat-item">
-                                    <span className="stat-value">{latestReaction.aggregates.avg}</span>
-                                    <span className="stat-label">Avg Response (ms)</span>
-                                </div>
-                                <div className="stat-item">
-                                    <span className="stat-value">{latestReaction.aggregates.median}</span>
-                                    <span className="stat-label">Median (ms)</span>
-                                </div>
-                                <div className="stat-item">
-                                    <span className="stat-value">{Math.round(latestReaction.aggregates.consistencyScore * 100)}%</span>
-                                    <span className="stat-label">Consistency</span>
-                                </div>
-                                <div className="stat-item">
-                                    <span className="stat-value">{latestReaction.falseStartCount}</span>
-                                    <span className="stat-label">False Starts</span>
-                                </div>
-                            </div>
-                            {latestReaction.derivedFeatures && (
-                                <div className="derived-features">
-                                    <span className="features-label">AI Analysis:</span>
-                                    <span className="feature-tag">Stability: {Math.round(latestReaction.derivedFeatures.stabilityIndex * 100)}%</span>
-                                    <span className="feature-tag">Fatigue: {latestReaction.derivedFeatures.fatigueSlope > 0 ? "+" : ""}{latestReaction.derivedFeatures.fatigueSlope.toFixed(1)}ms/round</span>
-                                </div>
-                            )}
-                        </CardContent>
-                    </Card>
-                )}
 
-                {/* No data message when in real data mode with no tests */}
+
+                {/* No data message */}
                 {!showDemoData && !hasUserData && (
                     <Card className="no-data-card">
                         <CardContent>
@@ -164,40 +190,7 @@ export function Dashboard() {
                     </Card>
                 )}
 
-                {/* User Reaction Time History Chart */}
-                {!showDemoData && hasUserData && userReactionChartData.length > 1 && (
-                    <Card className="chart-card user-chart">
-                        <CardHeader title="Your Reaction Time History" subtitle="Average response time per session" />
-                        <CardContent>
-                            <div className="chart-container">
-                                <ResponsiveContainer width="100%" height={250}>
-                                    <LineChart data={userReactionChartData}>
-                                        <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
-                                        <XAxis dataKey="name" stroke="#64748b" fontSize={12} />
-                                        <YAxis stroke="#64748b" fontSize={12} />
-                                        <Tooltip
-                                            contentStyle={{
-                                                backgroundColor: "#1e293b",
-                                                border: "1px solid rgba(255,255,255,0.1)",
-                                                borderRadius: "8px",
-                                            }}
-                                        />
-                                        <Line
-                                            type="monotone"
-                                            dataKey="avgReaction"
-                                            stroke="#38bdf8"
-                                            strokeWidth={3}
-                                            dot={{ fill: "#38bdf8", r: 6 }}
-                                            name="Avg Reaction (ms)"
-                                        />
-                                    </LineChart>
-                                </ResponsiveContainer>
-                            </div>
-                        </CardContent>
-                    </Card>
-                )}
-
-                {/* Risk Summary Card (Demo Data) */}
+                {/* Risk Summary (Demo Only) */}
                 {showDemoData && riskAnalysis && (
                     <Card className="risk-summary animate-fadeIn">
                         <div className="risk-summary-header">
@@ -228,133 +221,18 @@ export function Dashboard() {
                     </Card>
                 )}
 
-                {/* Charts Grid - Demo Data */}
-                {showDemoData && (
+                {/* Main Charts Grid - For both Real and Demo data */}
+                {(showDemoData || hasUserData) && (
                     <div className="charts-grid">
-                        {/* Memory Trend */}
-                        <Card className="chart-card">
-                            <CardHeader title="Memory Accuracy" subtitle="% correct recall" />
-                            <CardContent>
-                                <div className="chart-container">
-                                    <ResponsiveContainer width="100%" height={200}>
-                                        <LineChart data={chartData}>
-                                            <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
-                                            <XAxis dataKey="name" stroke="#64748b" fontSize={12} />
-                                            <YAxis domain={[0, 100]} stroke="#64748b" fontSize={12} />
-                                            <Tooltip
-                                                contentStyle={{
-                                                    backgroundColor: "#1e293b",
-                                                    border: "1px solid rgba(255,255,255,0.1)",
-                                                    borderRadius: "8px",
-                                                }}
-                                            />
-                                            <Line
-                                                type="monotone"
-                                                dataKey="memory"
-                                                stroke="#34d399"
-                                                strokeWidth={2}
-                                                dot={{ fill: "#34d399" }}
-                                            />
-                                        </LineChart>
-                                    </ResponsiveContainer>
-                                </div>
-                            </CardContent>
-                        </Card>
-
-                        {/* Reaction Time Trend */}
-                        <Card className="chart-card">
-                            <CardHeader title="Reaction Time" subtitle="Average response (ms)" />
-                            <CardContent>
-                                <div className="chart-container">
-                                    <ResponsiveContainer width="100%" height={200}>
-                                        <LineChart data={chartData}>
-                                            <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
-                                            <XAxis dataKey="name" stroke="#64748b" fontSize={12} />
-                                            <YAxis stroke="#64748b" fontSize={12} />
-                                            <Tooltip
-                                                contentStyle={{
-                                                    backgroundColor: "#1e293b",
-                                                    border: "1px solid rgba(255,255,255,0.1)",
-                                                    borderRadius: "8px",
-                                                }}
-                                            />
-                                            <Line
-                                                type="monotone"
-                                                dataKey="reaction"
-                                                stroke="#fbbf24"
-                                                strokeWidth={2}
-                                                dot={{ fill: "#fbbf24" }}
-                                            />
-                                        </LineChart>
-                                    </ResponsiveContainer>
-                                </div>
-                            </CardContent>
-                        </Card>
-
-                        {/* Pattern Score Trend */}
-                        <Card className="chart-card">
-                            <CardHeader title="Pattern Recognition" subtitle="% accuracy" />
-                            <CardContent>
-                                <div className="chart-container">
-                                    <ResponsiveContainer width="100%" height={200}>
-                                        <LineChart data={chartData}>
-                                            <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
-                                            <XAxis dataKey="name" stroke="#64748b" fontSize={12} />
-                                            <YAxis domain={[0, 100]} stroke="#64748b" fontSize={12} />
-                                            <Tooltip
-                                                contentStyle={{
-                                                    backgroundColor: "#1e293b",
-                                                    border: "1px solid rgba(255,255,255,0.1)",
-                                                    borderRadius: "8px",
-                                                }}
-                                            />
-                                            <Line
-                                                type="monotone"
-                                                dataKey="pattern"
-                                                stroke="#38bdf8"
-                                                strokeWidth={2}
-                                                dot={{ fill: "#38bdf8" }}
-                                            />
-                                        </LineChart>
-                                    </ResponsiveContainer>
-                                </div>
-                            </CardContent>
-                        </Card>
-
-                        {/* Speech WPM Trend */}
-                        <Card className="chart-card">
-                            <CardHeader title="Speech Rate" subtitle="Words per minute" />
-                            <CardContent>
-                                <div className="chart-container">
-                                    <ResponsiveContainer width="100%" height={200}>
-                                        <LineChart data={chartData}>
-                                            <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
-                                            <XAxis dataKey="name" stroke="#64748b" fontSize={12} />
-                                            <YAxis stroke="#64748b" fontSize={12} />
-                                            <Tooltip
-                                                contentStyle={{
-                                                    backgroundColor: "#1e293b",
-                                                    border: "1px solid rgba(255,255,255,0.1)",
-                                                    borderRadius: "8px",
-                                                }}
-                                            />
-                                            <Line
-                                                type="monotone"
-                                                dataKey="speech"
-                                                stroke="#a78bfa"
-                                                strokeWidth={2}
-                                                dot={{ fill: "#a78bfa" }}
-                                            />
-                                        </LineChart>
-                                    </ResponsiveContainer>
-                                </div>
-                            </CardContent>
-                        </Card>
+                        {renderChart("Memory Accuracy", "% correct recall", "memory", "#34d399", [0, 100], "%")}
+                        {renderChart("Reaction Time", "Average response (ms)", "reaction", "#fbbf24", ['auto', 'auto'], "ms")}
+                        {renderChart("Pattern Recognition", "Pattern Learning Score (Max Level x 10)", "pattern", "#38bdf8", [0, 100], "%")}
+                        {renderChart("Speech Rate", "Words per minute", "speech", "#a78bfa", ['auto', 'auto'], " wpm")}
                     </div>
                 )}
 
-                {/* Session History - Demo Data */}
-                {showDemoData && (
+                {/* Session History Table - For both Demo and Real Data */}
+                {(showDemoData || hasUserData) && (
                     <Card className="session-history">
                         <CardHeader title="Session History" subtitle="Recent cognitive assessments" />
                         <CardContent>
@@ -370,13 +248,13 @@ export function Dashboard() {
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        {sessions.slice().reverse().map((session) => (
-                                            <tr key={session.id}>
-                                                <td>{session.timestamp.toLocaleDateString()}</td>
-                                                <td>{Math.round(session.features.memoryAccuracy * 100)}%</td>
-                                                <td>{Math.round(session.features.reactionTimeAvg)}ms</td>
-                                                <td>{Math.round(session.features.patternScore * 100)}%</td>
-                                                <td>{Math.round(session.features.speechWPM)}</td>
+                                        {activeChartData.slice().reverse().map((session, i) => (
+                                            <tr key={i}>
+                                                <td>{session.date}</td>
+                                                <td>{session.memory ? `${session.memory}%` : '-'}</td>
+                                                <td>{session.reaction ? `${session.reaction}ms` : '-'}</td>
+                                                <td>{session.pattern ? `${session.pattern}%` : '-'}</td>
+                                                <td>{session.speech ? session.speech : '-'}</td>
                                             </tr>
                                         ))}
                                     </tbody>

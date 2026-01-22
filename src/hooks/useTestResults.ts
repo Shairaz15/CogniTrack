@@ -6,14 +6,81 @@
 
 import { useState, useEffect, useCallback } from "react";
 import type { ReactionTestResult } from "../components/tests/reaction/reactionFeatures";
+import type { PatternAssessmentResult } from "../types/patternTypes";
+import type { LanguageAssessmentResult } from "../types/languageTypes";
 
 const STORAGE_KEYS = {
     reactionResults: "cognitrack_reaction_results",
+    memoryResults: "cognitrack_memory_results",
+    patternResults: "cognitrack_pattern_results",
+    languageResults: "cognitrack_language_results",
     lastSession: "cognitrack_last_session",
 };
 
+// ... existing interfaces ...
+
+/**
+ * Hook for managing language assessment results in localStorage.
+ * Uses trend tracking (appends all results).
+ */
+export function useLanguageResults() {
+    const [results, setResults] = useState<LanguageAssessmentResult[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
+
+    // Load results
+    useEffect(() => {
+        try {
+            const stored = localStorage.getItem(STORAGE_KEYS.languageResults);
+            if (stored) {
+                const parsed = JSON.parse(stored) as LanguageAssessmentResult[];
+                const withDates = parsed.map((r) => ({
+                    ...r,
+                    timestamp: new Date(r.timestamp),
+                }));
+                setResults(withDates);
+            }
+        } catch (error) {
+            console.error("Failed to load language results:", error);
+        } finally {
+            setIsLoading(false);
+        }
+    }, []);
+
+    // Save a new result (Append only)
+    const saveResult = useCallback((result: LanguageAssessmentResult) => {
+        setResults((prev) => {
+            const updated = [...prev, result];
+            try {
+                localStorage.setItem(STORAGE_KEYS.languageResults, JSON.stringify(updated));
+            } catch (error) {
+                console.error("Failed to save language result:", error);
+            }
+            return updated;
+        });
+    }, []);
+
+    const getLatestResult = useCallback((): LanguageAssessmentResult | null => {
+        if (results.length === 0) return null;
+        return results[results.length - 1];
+    }, [results]);
+
+    return {
+        results,
+        isLoading,
+        saveResult,
+        getLatestResult,
+    };
+}
+
 export interface StoredResults {
     reactionResults: ReactionTestResult[];
+}
+
+export interface MemoryTestResult {
+    timestamp: Date;
+    totalWords: number;
+    correctCount: number;
+    accuracy: number; // 0-1
 }
 
 /**
@@ -43,10 +110,29 @@ export function useReactionResults() {
         }
     }, []);
 
-    // Save a new result
+    // Save a new result (Best of Day logic)
     const saveResult = useCallback((result: ReactionTestResult) => {
         setResults((prev) => {
-            const updated = [...prev, result];
+            const today = new Date(result.timestamp).toLocaleDateString();
+            const existingIndex = prev.findIndex(
+                (r) => new Date(r.timestamp).toLocaleDateString() === today
+            );
+
+            let updated: ReactionTestResult[];
+
+            if (existingIndex !== -1) {
+                // Check if new result is better (lower avg reaction time is better)
+                if (result.aggregates.avg < prev[existingIndex].aggregates.avg) {
+                    updated = [...prev];
+                    updated[existingIndex] = result;
+                } else {
+                    // Existing result is better, keep it
+                    return prev;
+                }
+            } else {
+                updated = [...prev, result];
+            }
+
             try {
                 localStorage.setItem(STORAGE_KEYS.reactionResults, JSON.stringify(updated));
             } catch (error) {
@@ -96,27 +182,128 @@ export function useReactionResults() {
 }
 
 /**
- * Loads the last reaction result from session storage (immediate result after test).
+ * Hook for managing memory test results in localStorage.
  */
-export function getLastReactionResult(): ReactionTestResult | null {
-    try {
-        const stored = sessionStorage.getItem("lastReactionResult");
-        if (stored) {
-            const parsed = JSON.parse(stored);
-            return {
-                ...parsed,
-                timestamp: new Date(parsed.timestamp),
-            };
+export function useMemoryResults() {
+    const [results, setResults] = useState<MemoryTestResult[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
+
+    // Load results from localStorage on mount
+    useEffect(() => {
+        try {
+            const stored = localStorage.getItem(STORAGE_KEYS.memoryResults);
+            if (stored) {
+                const parsed = JSON.parse(stored) as MemoryTestResult[];
+                const withDates = parsed.map((r) => ({
+                    ...r,
+                    timestamp: new Date(r.timestamp),
+                }));
+                setResults(withDates);
+            }
+        } catch (error) {
+            console.error("Failed to load memory results:", error);
+        } finally {
+            setIsLoading(false);
         }
-    } catch (error) {
-        console.error("Failed to load last reaction result:", error);
-    }
-    return null;
+    }, []);
+
+    // Save a new result (Best of Day logic)
+    const saveResult = useCallback((result: MemoryTestResult) => {
+        setResults((prev) => {
+            const today = new Date(result.timestamp).toLocaleDateString();
+            const existingIndex = prev.findIndex(
+                (r) => new Date(r.timestamp).toLocaleDateString() === today
+            );
+
+            let updated: MemoryTestResult[];
+
+            if (existingIndex !== -1) {
+                // Check if new result is better (higher accuracy is better)
+                if (result.accuracy > prev[existingIndex].accuracy) {
+                    updated = [...prev];
+                    updated[existingIndex] = result;
+                } else {
+                    // Existing result is better or equal, keep it
+                    return prev;
+                }
+            } else {
+                updated = [...prev, result];
+            }
+
+            try {
+                localStorage.setItem(STORAGE_KEYS.memoryResults, JSON.stringify(updated));
+            } catch (error) {
+                console.error("Failed to save memory result:", error);
+            }
+            return updated;
+        });
+    }, []);
+
+    const getLatestResult = useCallback((): MemoryTestResult | null => {
+        if (results.length === 0) return null;
+        return results[results.length - 1];
+    }, [results]);
+
+    return {
+        results,
+        isLoading,
+        saveResult,
+        getLatestResult,
+    };
 }
 
 /**
- * Clears the last reaction result from session storage.
+ * Hook for managing pattern recognition test results in localStorage.
+ * Unlike Reaction/Memory, this uses full trend tracking (appending all results).
  */
-export function clearLastReactionResult(): void {
-    sessionStorage.removeItem("lastReactionResult");
+export function usePatternResults() {
+    const [results, setResults] = useState<PatternAssessmentResult[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
+
+    // Load results
+    useEffect(() => {
+        try {
+            const stored = localStorage.getItem(STORAGE_KEYS.patternResults);
+            if (stored) {
+                const parsed = JSON.parse(stored) as PatternAssessmentResult[];
+                const withDates = parsed.map((r) => ({
+                    ...r,
+                    timestamp: new Date(r.timestamp),
+                }));
+                setResults(withDates);
+            }
+        } catch (error) {
+            console.error("Failed to load pattern results:", error);
+        } finally {
+            setIsLoading(false);
+        }
+    }, []);
+
+    // Save a new result (Append only, no Best of Day replacement)
+    const saveResult = useCallback((result: PatternAssessmentResult) => {
+        setResults((prev) => {
+            const updated = [...prev, result];
+            try {
+                localStorage.setItem(STORAGE_KEYS.patternResults, JSON.stringify(updated));
+            } catch (error) {
+                console.error("Failed to save pattern result:", error);
+            }
+            return updated;
+        });
+    }, []);
+
+    const getLatestResult = useCallback((): PatternAssessmentResult | null => {
+        if (results.length === 0) return null;
+        return results[results.length - 1];
+    }, [results]);
+
+    return {
+        results,
+        isLoading,
+        saveResult,
+        getLatestResult,
+    };
 }
+
+// ... (End of file cleanup)
+
