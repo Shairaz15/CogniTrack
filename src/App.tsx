@@ -1,5 +1,5 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { Landing, Dashboard, Tests } from "./pages";
+import { Landing, Dashboard, Tests, MemoryAssessment } from "./pages";
 import { ReactionTimeTest } from "./components/tests/reaction/ReactionTimeTest";
 import "./index.css";
 
@@ -10,6 +10,7 @@ function App() {
         <Route path="/" element={<Landing />} />
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/tests" element={<Tests />} />
+        <Route path="/test/memory" element={<MemoryAssessment />} />
         <Route path="/test/reaction" element={<ReactionTimeTest />} />
       </Routes>
     </BrowserRouter>
