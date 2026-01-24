@@ -179,26 +179,42 @@ export function LanguageAssessment() {
         <PageWrapper>
             <div className="language-container center-content" style={{ color: 'white', position: 'relative', zIndex: 5 }}>
                 {phase === 'instructions' && (
-                    <Card className="intro-card">
-                        <h1>Language Fluency Assessment</h1>
-                        <p className="subtitle">Spontaneous speech analysis for cognitive trends.</p>
+                    <div className="assessment-phase instructions-phase">
+                        <div className="phase-icon">🎙️</div>
+                        <h2>Language Fluency Assessment</h2>
+                        <p className="phase-description">
+                            Spontaneous speech analysis for cognitive trends.
+                        </p>
 
                         <div className="privacy-notice">
                             <strong>🔒 Privacy Notice</strong>
                             <p>Audio is processed locally by your browser. No voice recordings are stored or sent to our servers.</p>
                         </div>
 
-                        <ul className="instructions-list">
-                            <li>You will be given a simple topic to discuss.</li>
-                            <li>Speak naturally for at least 30 seconds.</li>
-                            <li>Try to provide as much detail as possible.</li>
-                        </ul>
+                        <div className="instructions-list">
+                            <div className="instruction-item">
+                                <span className="instruction-number">1</span>
+                                <span>You will be given a simple topic to discuss</span>
+                            </div>
+                            <div className="instruction-item">
+                                <span className="instruction-number">2</span>
+                                <span>Speak naturally for at least 30 seconds</span>
+                            </div>
+                            <div className="instruction-item">
+                                <span className="instruction-number">3</span>
+                                <span>Try to provide as much detail as possible</span>
+                            </div>
+                        </div>
+
+                        <p className="reassurance-text">
+                            Take your time and speak naturally. There are no right or wrong answers.
+                        </p>
 
                         <div className="button-group">
                             <Button variant="secondary" onClick={() => navigate('/tests')}>Cancel</Button>
                             <Button variant="primary" onClick={() => setPhase('permission')}>Start</Button>
                         </div>
-                    </Card>
+                    </div>
                 )}
 
                 {phase === 'permission' && (

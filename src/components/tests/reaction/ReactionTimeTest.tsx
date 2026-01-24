@@ -220,26 +220,45 @@ export function ReactionTimeTest() {
 
                 {/* Idle state */}
                 {state === "idle" && (
-                    <div className="reaction-start">
-                        <p className="instruction-text">
+                    <div className="assessment-phase instructions-phase">
+                        <div className="phase-icon">⚡</div>
+                        <h2>Reaction Time Assessment</h2>
+                        <p className="phase-description">
                             This task measures your response latency to visual stimuli.
-                            <br />
-                            Respond as quickly as possible when the stimulus appears.
                         </p>
+
+                        <div className="instructions-list">
+                            <div className="instruction-item">
+                                <span className="instruction-number">1</span>
+                                <span>Wait for the screen to change color</span>
+                            </div>
+                            <div className="instruction-item">
+                                <span className="instruction-number">2</span>
+                                <span>Click or tap as quickly as possible when it does</span>
+                            </div>
+                            <div className="instruction-item">
+                                <span className="instruction-number">3</span>
+                                <span>Complete 6 rounds (first round is calibration)</span>
+                            </div>
+                        </div>
+
+                        <p className="reassurance-text">
+                            Respond as quickly as possible. Occasional variation is completely normal.
+                        </p>
+
                         <Button variant="primary" size="lg" onClick={handleStart}>
                             Begin Assessment
                         </Button>
                     </div>
                 )}
 
-                {/* Instructions state */}
+                {/* Instructions state - quick reminder before starting */}
                 {state === "instructions" && (
-                    <div className="reaction-instructions">
-                        <ul className="instruction-list">
-                            <li>Await the stimulus (screen color change)</li>
-                            <li>Click/tap as soon as it appears</li>
-                            <li>6 rounds total (first round is calibration)</li>
-                        </ul>
+                    <div className="assessment-phase">
+                        <h2 className="reaction-message">Get Ready</h2>
+                        <p className="phase-description">
+                            Watch for the screen color change, then click or tap immediately.
+                        </p>
                         <Button variant="primary" size="lg" onClick={handleContinueFromInstructions}>
                             Start
                         </Button>

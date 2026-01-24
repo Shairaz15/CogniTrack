@@ -45,14 +45,87 @@
 }
 
 .instructions-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    margin: 2rem 0;
     text-align: left;
-    margin: 1.5rem 0;
-    padding-left: 1.5rem;
-    color: #cbd5e1;
+    padding-left: 0;
 }
 
 .instructions-list li {
     margin-bottom: 0.5rem;
+}
+
+.instruction-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 12px;
+}
+
+.instruction-number {
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--primary-gradient, linear-gradient(135deg, #2dd4bf 0%, #818cf8 100%));
+    border-radius: 50%;
+    font-weight: 600;
+    flex-shrink: 0;
+    color: var(--bg-deep, #050505);
+}
+
+/* Assessment Phase */
+.assessment-phase {
+    max-width: 600px;
+    width: 100%;
+    text-align: center;
+    animation: fadeIn 0.4s ease-out;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.phase-icon {
+    font-size: 4rem;
+    margin-bottom: 1.5rem;
+}
+
+.phase-description {
+    font-size: 1.1rem;
+    color: var(--color-text-secondary, #cbd5e1);
+    margin-bottom: 2rem;
+    line-height: 1.6;
+}
+
+.instructions-phase h2 {
+    font-size: 2rem;
+    margin-bottom: 1rem;
+    color: var(--color-text-primary, #f8fafc);
+}
+
+.reassurance-text {
+    font-size: 0.95rem;
+    color: var(--color-text-muted, #64748b);
+    font-style: italic;
+    margin: 1.5rem 0 2rem;
+    padding: 1rem;
+    background: rgba(52, 211, 153, 0.1);
+    border-radius: 8px;
+    border-left: 3px solid var(--color-success, #34d399);
 }
 
 .button-group {
