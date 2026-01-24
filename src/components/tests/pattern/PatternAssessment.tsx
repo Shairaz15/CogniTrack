@@ -245,22 +245,35 @@ export function PatternAssessment() {
         <PageWrapper>
             <div className="pattern-container">
                 {phase === 'instructions' && (
-                    <div className="phase-container">
-                        <h1>Visual Sequence Memory</h1>
-                        <p className="text-secondary">Assessment of pattern learning and working memory.</p>
+                    <div className="assessment-phase instructions-phase">
+                        <div className="phase-icon">🧩</div>
+                        <h2>Visual Sequence Memory</h2>
+                        <p className="phase-description">
+                            Assessment of pattern learning and working memory.
+                        </p>
 
-                        <div className="instruction-card">
-                            <h3>Instructions</h3>
-                            <ul style={{ textAlign: 'left', margin: '1.5rem 0', lineHeight: '1.6' }}>
-                                <li>Watch the tiles light up in a sequence.</li>
-                                <li>Repeat the sequence by clicking the tiles in the same order.</li>
-                                <li>The pattern will get longer and faster as you progress.</li>
-                                <li>Stay calm and focus on accuracy.</li>
-                            </ul>
-                            <div className="button-group">
-                                <Button onClick={() => navigate('/tests')} variant="secondary">Back</Button>
-                                <Button onClick={() => setPhase('demonstration')} variant="primary">Start Practice</Button>
+                        <div className="instructions-list">
+                            <div className="instruction-item">
+                                <span className="instruction-number">1</span>
+                                <span>Watch the tiles light up in a sequence</span>
                             </div>
+                            <div className="instruction-item">
+                                <span className="instruction-number">2</span>
+                                <span>Repeat the sequence by clicking the tiles in the same order</span>
+                            </div>
+                            <div className="instruction-item">
+                                <span className="instruction-number">3</span>
+                                <span>The pattern will get longer and faster as you progress</span>
+                            </div>
+                        </div>
+
+                        <p className="reassurance-text">
+                            Stay calm and focus on accuracy. Occasional variation is completely normal.
+                        </p>
+
+                        <div className="button-group">
+                            <Button onClick={() => navigate('/tests')} variant="secondary">Back</Button>
+                            <Button onClick={() => setPhase('demonstration')} variant="primary">Start Practice</Button>
                         </div>
                     </div>
                 )}
