@@ -313,9 +313,14 @@ export function PatternAssessment() {
                                     );
                                 })()}
                             </div>
-                            <Button onClick={() => navigate('/dashboard')} variant="primary" className="w-full mt-4">
-                                View Dashboard
-                            </Button>
+                            <div className="button-group">
+                                <Button onClick={() => navigate('/dashboard')} variant="primary">
+                                    View Dashboard
+                                </Button>
+                                <Button onClick={() => navigate('/tests')} variant="secondary">
+                                    Back to Assessments
+                                </Button>
+                            </div>
                         </div>
                     </div>
                 )}

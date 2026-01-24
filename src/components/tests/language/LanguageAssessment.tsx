@@ -319,7 +319,10 @@ export function LanguageAssessment() {
                             })()}
                         </div>
 
-                        <Button onClick={() => navigate('/dashboard')} className="w-full mt-4">View Dashboard Trends</Button>
+                        <div className="button-group">
+                            <Button onClick={() => navigate('/dashboard')}>View Dashboard Trends</Button>
+                            <Button onClick={() => navigate('/tests')} variant="secondary">Back to Assessments</Button>
+                        </div>
                     </Card>
                 )}
             </div>

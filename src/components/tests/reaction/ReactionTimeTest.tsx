@@ -275,9 +275,14 @@ export function ReactionTimeTest() {
                                 );
                             })()}
                         </div>
-                        <Button variant="primary" size="lg" onClick={handleFinish}>
-                            View Results
-                        </Button>
+                        <div className="result-actions">
+                            <Button variant="primary" size="lg" onClick={handleFinish}>
+                                View Results
+                            </Button>
+                            <Button variant="secondary" size="lg" onClick={() => navigate("/tests")}>
+                                Back to Assessments
+                            </Button>
+                        </div>
                     </div>
                 )}
 

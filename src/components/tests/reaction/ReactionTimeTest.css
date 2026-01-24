@@ -170,3 +170,12 @@
         transform: translateY(0);
     }
 }
+
+/* Result Actions */
+.result-actions {
+    display: flex;
+    gap: var(--spacing-md);
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-top: var(--spacing-lg);
+}
