@@ -211,6 +211,9 @@ export function Dashboard() {
                             Track your cognitive performance patterns over time
                         </p>
                     </div>
+                    <Button variant="primary" onClick={() => window.location.href = "/tests"}>
+                        Take New Assessment
+                    </Button>
                 </div>
 
                 {/* Simulation Controls - Always visible */}
@@ -356,12 +359,7 @@ export function Dashboard() {
                     </Card>
                 )}
 
-                {/* Actions */}
-                <div className="dashboard-actions">
-                    <Button variant="primary" size="lg" onClick={() => window.location.href = "/tests"}>
-                        Take New Assessment
-                    </Button>
-                </div>
+
             </div>
         </PageWrapper>
     );

@@ -81,12 +81,13 @@
 /* Bento Grid Layout */
 .hero-bento {
     display: grid;
-    grid-template-columns: 1fr 320px;
+    grid-template-columns: 1fr 400px;
     gap: var(--spacing-xl);
     max-width: 1000px;
     width: 100%;
-    align-items: center;
+    align-items: flex-start;
 }
+
 
 .hero-content {
     text-align: left;
@@ -174,7 +175,7 @@
 /* Hero Simulation Card */
 .hero-simulation {
     padding: var(--spacing-lg);
-    height: 200px;
+    height: 280px;
     display: flex;
     flex-direction: column;
 }
@@ -198,10 +199,7 @@
 }
 
 .simulation-line {
-    stroke-dasharray: 300;
-    stroke-dashoffset: 300;
-    animation: drawLine 2s ease-out forwards;
-    animation-delay: 0.5s;
+    transition: d 1.5s cubic-bezier(0.4, 0, 0.2, 1), stroke 1.5s ease;
     filter: drop-shadow(0 0 6px rgba(45, 212, 191, 0.5));
 }
 
@@ -216,9 +214,10 @@
 /* Disclaimer Card */
 .disclaimer-card {
     text-align: left;
-    max-width: 600px;
     width: 100%;
     padding: var(--spacing-lg);
+    margin-bottom: var(--spacing-lg);
+    margin-top: var(--spacing-lg);
 }
 
 .disclaimer-header {
@@ -284,8 +283,9 @@
 .hero-actions {
     display: flex;
     gap: var(--spacing-md);
-    justify-content: center;
+    justify-content: flex-start;
     flex-wrap: wrap;
+    margin-top: var(--spacing-lg);
 }
 
 /* ===== Section Styles ===== */
@@ -627,4 +627,13 @@
     .trust-section {
         padding: var(--spacing-2xl) var(--spacing-md);
     }
+}
+
+/* Trend Label Colors */
+.text-warning {
+    color: var(--color-status-change);
+}
+
+.text-success {
+    color: var(--color-status-stable);
 }

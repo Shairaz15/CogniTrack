@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button, Icon } from "../components/common";
 import { MAIN_DISCLAIMER } from "../ethics/disclaimer";
@@ -8,6 +8,111 @@ import "./Landing.css";
 export function Landing() {
     const [disclaimerAccepted, setDisclaimerAccepted] = useState(false);
     const navigate = useNavigate();
+
+    // Trend Animation States
+    const TRENDS = [
+        {
+            id: 'stable',
+            label: 'Stable Trend',
+            color: 'text-accent',
+            colorHex: '#2dd4bf', // Teal
+            path: 'M 0 50 Q 50 45, 100 50 T 200 50'
+        },
+        {
+            id: 'declining',
+            label: 'Declining Trend',
+            color: 'text-warning',
+            colorHex: '#fbbf24', // Amber
+            path: 'M 0 30 Q 50 35, 100 50 T 200 70'
+        },
+        {
+            id: 'improving',
+            label: 'Improving Trend',
+            color: 'text-success',
+            colorHex: '#34d399', // Green
+            path: 'M 0 70 Q 50 60, 100 40 T 200 20'
+        }
+    ];
+
+    const [trendIndex, setTrendIndex] = useState(0);
+    const targetTrend = TRENDS[trendIndex];
+
+    // Custom hook for smooth interpolation
+    const useSmoothTrend = (target: typeof TRENDS[0], duration = 1500) => {
+        const [currentPath, setCurrentPath] = useState(target.path);
+        const [currentColor, setCurrentColor] = useState(target.colorHex);
+        const requestRef = useRef<number | null>(null);
+        const startTimeRef = useRef<number | undefined>(undefined);
+        const startValuesRef = useRef({ path: target.path, color: target.colorHex });
+
+        // Helper to parse path string into numbers
+        const parsePath = (d: string) => d.match(/-?\d+(\.\d+)?/g)?.map(Number) || [];
+
+        // Helper to reconstruct path string
+        const buildPath = (nums: number[]) =>
+            `M ${nums[0]} ${nums[1]} Q ${nums[2]} ${nums[3]}, ${nums[4]} ${nums[5]} T ${nums[6]} ${nums[7]}`;
+
+        // Helper to parse hex to rgb
+        const hexToRgb = (hex: string) => {
+            const r = parseInt(hex.slice(1, 3), 16);
+            const g = parseInt(hex.slice(3, 5), 16);
+            const b = parseInt(hex.slice(5, 7), 16);
+            return [r, g, b];
+        };
+
+        // Helper to stringify rgb
+        const rgbToHex = (r: number, g: number, b: number) =>
+            "#" + [r, g, b].map(x => Math.round(x).toString(16).padStart(2, '0')).join('');
+
+        useEffect(() => {
+            startValuesRef.current = { path: currentPath, color: currentColor };
+            startTimeRef.current = undefined;
+
+            const animate = (time: number) => {
+                if (startTimeRef.current === undefined) startTimeRef.current = time;
+                const progress = Math.min((time - startTimeRef.current) / duration, 1);
+
+                // Ease function (cubic-bezier approximation)
+                const ease = progress < 0.5 ? 2 * progress * progress : -1 + (4 - 2 * progress) * progress;
+
+                // Path Interpolation
+                const startNums = parsePath(startValuesRef.current.path);
+                const endNums = parsePath(target.path);
+                const currentNums = startNums.map((start, i) => start + (endNums[i] - start) * ease);
+                const newPath = buildPath(currentNums);
+
+                // Color Interpolation
+                const startColor = hexToRgb(startValuesRef.current.color);
+                const endColor = hexToRgb(target.colorHex);
+                const newColorRgb = startColor.map((c, i) => c + (endColor[i] - c) * ease);
+                const newColor = rgbToHex(newColorRgb[0], newColorRgb[1], newColorRgb[2]);
+
+                setCurrentPath(newPath);
+                setCurrentColor(newColor);
+
+                if (progress < 1) {
+                    requestRef.current = requestAnimationFrame(animate);
+                }
+            };
+
+            requestRef.current = requestAnimationFrame(animate);
+            return () => {
+                if (requestRef.current !== null) cancelAnimationFrame(requestRef.current);
+            };
+        }, [target.id]); // Re-run when target changes
+
+        return { path: currentPath, color: currentColor };
+    };
+
+    const animatedTrend = useSmoothTrend(targetTrend, 1500);
+
+    // Initial Timer
+    useEffect(() => {
+        const interval = setInterval(() => {
+            setTrendIndex((prev) => (prev + 1) % TRENDS.length);
+        }, 4000);
+        return () => clearInterval(interval);
+    }, []);
 
     const handleStart = () => {
         if (disclaimerAccepted) {
@@ -68,6 +173,41 @@ export function Landing() {
                                 <span className="stat-label">Privacy First</span>
                             </div>
                         </div>
+
+                        {/* Disclaimer Card */}
+                        <div className="disclaimer-card glass-card animate-fadeIn delay-400">
+                            <div className="disclaimer-header">
+                                <Icon name="info" size={20} animated />
+                                <span className="disclaimer-title">Important Notice</span>
+                            </div>
+                            <p className="disclaimer-text">{MAIN_DISCLAIMER}</p>
+                            <label className="disclaimer-checkbox">
+                                <input
+                                    type="checkbox"
+                                    checked={disclaimerAccepted}
+                                    onChange={(e) => setDisclaimerAccepted(e.target.checked)}
+                                />
+                                <span className="checkbox-custom">
+                                    {disclaimerAccepted && <Icon name="check" size={14} />}
+                                </span>
+                                <span>I understand and accept these terms</span>
+                            </label>
+                        </div>
+
+                        {/* Action Buttons */}
+                        <div className="hero-actions animate-fadeIn delay-500">
+                            <Button
+                                variant="primary"
+                                size="lg"
+                                onClick={handleStart}
+                                disabled={!disclaimerAccepted}
+                            >
+                                Start Assessment
+                            </Button>
+                            <Button variant="secondary" size="lg" onClick={handleDemo}>
+                                How It Works
+                            </Button>
+                        </div>
                     </div>
 
                     {/* Simulation Card - Trend Line Preview */}
@@ -77,61 +217,24 @@ export function Landing() {
                             <span>Trend Preview</span>
                         </div>
                         <svg className="simulation-chart" viewBox="0 0 200 80" preserveAspectRatio="none">
-                            <defs>
-                                <linearGradient id="lineGradient" x1="0%" y1="0%" x2="100%" y2="0%">
-                                    <stop offset="0%" stopColor="#2dd4bf" />
-                                    <stop offset="100%" stopColor="#818cf8" />
-                                </linearGradient>
-                            </defs>
                             <path
                                 className="simulation-line"
-                                d="M 0 60 Q 25 55, 50 45 T 100 35 T 150 25 T 200 20"
+                                d={animatedTrend.path} // Animated Path
                                 fill="none"
-                                stroke="url(#lineGradient)"
-                                strokeWidth="2"
+                                stroke={animatedTrend.color} // Animated Color
+                                strokeWidth="3"
                                 strokeLinecap="round"
+                                style={{ transition: 'none' }} // Disable CSS transition to let JS handle it
                             />
                         </svg>
                         <div className="simulation-labels">
                             <span>Sessions</span>
-                            <span className="text-accent">Stable Trend</span>
+                            {/* Key forces re-render of fade animation on label text only */}
+                            <span key={targetTrend.id} className={`trend-label ${targetTrend.color} animate-fadeIn`}>
+                                {targetTrend.label}
+                            </span>
                         </div>
                     </div>
-                </div>
-
-                {/* Disclaimer Card */}
-                <div className="disclaimer-card glass-card animate-fadeIn delay-400">
-                    <div className="disclaimer-header">
-                        <Icon name="info" size={20} animated />
-                        <span className="disclaimer-title">Important Notice</span>
-                    </div>
-                    <p className="disclaimer-text">{MAIN_DISCLAIMER}</p>
-                    <label className="disclaimer-checkbox">
-                        <input
-                            type="checkbox"
-                            checked={disclaimerAccepted}
-                            onChange={(e) => setDisclaimerAccepted(e.target.checked)}
-                        />
-                        <span className="checkbox-custom">
-                            {disclaimerAccepted && <Icon name="check" size={14} />}
-                        </span>
-                        <span>I understand and accept these terms</span>
-                    </label>
-                </div>
-
-                {/* Action Buttons */}
-                <div className="hero-actions animate-fadeIn delay-500">
-                    <Button
-                        variant="primary"
-                        size="lg"
-                        onClick={handleStart}
-                        disabled={!disclaimerAccepted}
-                    >
-                        Start Assessment
-                    </Button>
-                    <Button variant="secondary" size="lg" onClick={handleDemo}>
-                        How It Works
-                    </Button>
                 </div>
             </section>
 
