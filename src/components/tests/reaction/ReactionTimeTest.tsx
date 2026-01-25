@@ -230,15 +230,15 @@ export function ReactionTimeTest() {
                         <div className="instructions-list">
                             <div className="instruction-item">
                                 <span className="instruction-number">1</span>
-                                <span>Wait for the screen to change color</span>
+                                <span className="instruction-text">Wait for the screen to change color</span>
                             </div>
                             <div className="instruction-item">
                                 <span className="instruction-number">2</span>
-                                <span>Click or tap as quickly as possible when it does</span>
+                                <span className="instruction-text">Click or tap as quickly as possible when it does</span>
                             </div>
                             <div className="instruction-item">
                                 <span className="instruction-number">3</span>
-                                <span>Complete 6 rounds (first round is calibration)</span>
+                                <span className="instruction-text">Complete 6 rounds (first round is calibration)</span>
                             </div>
                         </div>
 
@@ -255,9 +255,8 @@ export function ReactionTimeTest() {
                 {/* Instructions state - quick reminder before starting */}
                 {state === "instructions" && (
                     <div className="assessment-phase">
-                        <h2 className="reaction-message">Get Ready</h2>
                         <p className="phase-description">
-                            Watch for the screen color change, then click or tap immediately.
+                            Click immediately when the screen changes color.
                         </p>
                         <Button variant="primary" size="lg" onClick={handleContinueFromInstructions}>
                             Start
@@ -268,39 +267,47 @@ export function ReactionTimeTest() {
                 {/* Test complete state */}
                 {state === "test_complete" && (
                     <div className="reaction-complete">
-                        <h2>Assessment Complete</h2>
+                        <div className="result-card">
+                            {/* Inner header removed here */}
 
-                        <div className="result-summary">
-                            <div className="result-item">
-                                <span className="result-label">Average Time</span>
-                                <span className="result-value">
-                                    {Math.round(rounds.filter((r) => !r.isCalibration && !r.isFalseStart && !r.isTimeout)
-                                        .reduce((a, b) => a + (b.reactionTime || 0), 0) /
-                                        rounds.filter((r) => !r.isCalibration && !r.isFalseStart && !r.isTimeout).length)} ms
-                                </span>
-                            </div>
-
-                            {/* New Feedback Section */}
                             {(() => {
                                 const validRounds = rounds.filter((r) => !r.isCalibration && !r.isFalseStart && !r.isTimeout);
-                                const avgTime = validRounds.reduce((a, b) => a + (b.reactionTime || 0), 0) / validRounds.length;
+                                const avgTime = Math.round(validRounds.reduce((a, b) => a + (b.reactionTime || 0), 0) / validRounds.length);
+                                const fastestTime = Math.min(...validRounds.map(r => r.reactionTime || 9999));
                                 const feedback = getReactionFeedback(avgTime);
 
+                                // Map feedback color to CSS class
+                                const colorClass = `text-${feedback.color}`;
+
                                 return (
-                                    <div className={`feedback-badge ${feedback.color}`}>
-                                        <span className="feedback-category">{feedback.category}</span>
-                                        <p className="feedback-message">{feedback.message}</p>
-                                    </div>
+                                    <>
+                                        <div className="result-metrics-grid">
+                                            <div className="result-metric primary-metric">
+                                                <span className="metric-label">Fastest Response</span>
+                                                <span className="metric-value">{fastestTime} <span className="unit">ms</span></span>
+                                            </div>
+                                            <div className="result-metric secondary-metric">
+                                                <span className="metric-label">Average Response</span>
+                                                <span className="metric-value">{avgTime} <span className="unit">ms</span></span>
+                                            </div>
+                                        </div>
+
+                                        <div className={`feedback-section ${colorClass}Border`}>
+                                            <h3 className={`feedback-title ${colorClass}`}>{feedback.category}</h3>
+                                            <p className="feedback-message">{feedback.message}</p>
+                                        </div>
+                                    </>
                                 );
                             })()}
-                        </div>
-                        <div className="result-actions">
-                            <Button variant="primary" size="lg" onClick={handleFinish}>
-                                View Results
-                            </Button>
-                            <Button variant="secondary" size="lg" onClick={() => navigate("/tests")}>
-                                Back to Assessments
-                            </Button>
+
+                            <div className="result-actions">
+                                <Button variant="primary" size="lg" onClick={handleFinish}>
+                                    View Dashboard
+                                </Button>
+                                <Button variant="secondary" size="lg" onClick={() => navigate("/tests")}>
+                                    Retry
+                                </Button>
+                            </div>
                         </div>
                     </div>
                 )}

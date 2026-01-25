@@ -148,14 +148,18 @@
 }
 
 /* Tap hint */
+/* Tap hint */
 .tap-hint {
     position: absolute;
     bottom: var(--spacing-xl);
-    left: 50%;
-    transform: translateX(-50%);
-    color: var(--color-text-muted);
-    font-size: var(--font-size-sm);
+    left: 0;
+    width: 100%;
+    text-align: center;
+    color: rgba(255, 255, 255, 0.7);
+    font-size: var(--font-size-lg);
+    font-weight: 500;
     animation: pulse 2s ease-in-out infinite;
+    pointer-events: none;
 }
 
 /* Animations */
@@ -236,13 +240,100 @@
     color: var(--bg-deep, #050505);
 }
 
-.reassurance-text {
-    font-size: 0.95rem;
-    color: var(--color-text-muted, #64748b);
-    font-style: italic;
-    margin: 1.5rem 0 2rem;
+/* Result Card & Metrics */
+.result-card {
+    background: rgba(30, 41, 59, 0.7);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 24px;
+    padding: 3rem;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+    max-width: 500px;
+    margin: 4rem auto 0;
+    /* Updated: Push down */
+    animation: fadeIn 0.5s ease-out;
+}
+
+.result-metrics-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.result-metric {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
     padding: 1rem;
-    background: rgba(52, 211, 153, 0.1);
-    border-radius: 8px;
-    border-left: 3px solid var(--color-success, #34d399);
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 12px;
+}
+
+.primary-metric {
+    background: rgba(45, 212, 191, 0.1);
+    border: 1px solid rgba(45, 212, 191, 0.2);
+}
+
+.metric-label {
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--color-text-secondary);
+    margin-bottom: 0.5rem;
+}
+
+.metric-value {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: var(--color-text-primary);
+    line-height: 1;
+}
+
+.primary-metric .metric-value {
+    color: #2dd4bf;
+}
+
+.unit {
+    font-size: 1rem;
+    font-weight: 400;
+    color: var(--color-text-muted);
+}
+
+/* Feedback Styling */
+.feedback-section {
+    margin: 2rem 0;
+    text-align: center;
+}
+
+.feedback-title {
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+}
+
+.feedback-message {
+    font-size: 1rem;
+    color: var(--color-text-secondary);
+}
+
+/* Color Utilities */
+.text-success {
+    color: #34d399;
+}
+
+.text-warning {
+    color: #facc15;
+}
+
+.text-danger {
+    color: #ef4444;
+}
+
+.text-primary {
+    color: #60a5fa;
+}
+
+.text-neutral {
+    color: #cbd5e1;
 }
