@@ -8,5 +8,10 @@ export default defineConfig({
     watch: {
       ignored: ['**/venv/**', '**/training/**', '**/public/models/**']
     }
-  }
+  },
+  resolve: {
+    alias: {
+      "@": "/src",
+    },
+  },
 })
