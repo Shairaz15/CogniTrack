@@ -7,9 +7,10 @@ import { useState } from 'react';
 import { DEMO_SESSIONS, getDemoSessionDataPoints } from '../demo/demoSessions';
 import { DEMO_USER } from '../demo/demoProfile';
 import { PageWrapper } from '../components/layout/PageWrapper';
-import { Button, Card, CardHeader, CardContent, RiskBadge } from '../components/common';
+import { Button, Card, CardContent, RiskBadge } from '../components/common';
 import { analyzeTrend } from '../ai/trendAnalyzer';
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
+import type { RiskLevel } from '../ethics/messagingRules';
 import './Demo.css';
 
 export function Demo() {
@@ -17,6 +18,11 @@ export function Demo() {
 
     const dataPoints = getDemoSessionDataPoints();
     const trendResult = analyzeTrend(dataPoints);
+
+    // Map internal trend risk to UI RiskLevel
+    const riskLevel: RiskLevel =
+        trendResult.risk === 'high' ? 'possible_risk' :
+            trendResult.risk === 'medium' ? 'change_detected' : 'stable';
 
     const chartData = DEMO_SESSIONS.map((session) => ({
         date: session.timestamp.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
@@ -38,17 +44,17 @@ export function Demo() {
                     <div className="demo-badge">Demo Mode</div>
                     <h1>Cognitive Trend Analysis</h1>
                     <p>
-                        Viewing synthetic data for <strong>{DEMO_USER.displayName}</strong> showing a
+                        Viewing synthetic data for <strong>{DEMO_USER.name}</strong> showing a
                         gradual cognitive decline pattern over 6 sessions.
                     </p>
                 </header>
 
                 <div className="demo-grid">
                     <Card className="trend-card">
-                        <CardHeader>
-                            <h2>Trend Analysis</h2>
-                            <RiskBadge level={trendResult.risk} />
-                        </CardHeader>
+                        <div className="card-header">
+                            <h3 className="card-title">Trend Analysis</h3>
+                            <RiskBadge level={riskLevel} />
+                        </div>
                         <CardContent>
                             <div className="trend-summary">
                                 <div className="trend-item">
@@ -73,8 +79,8 @@ export function Demo() {
                     </Card>
 
                     <Card className="chart-card">
-                        <CardHeader>
-                            <h2>Performance Over Time</h2>
+                        <div className="card-header">
+                            <h3 className="card-title">Performance Over Time</h3>
                             <div className="metric-selector">
                                 {Object.entries(metricConfig).map(([key, config]) => (
                                     <button
@@ -87,7 +93,7 @@ export function Demo() {
                                     </button>
                                 ))}
                             </div>
-                        </CardHeader>
+                        </div>
                         <CardContent>
                             <div className="chart-container">
                                 <ResponsiveContainer width="100%" height={250}>
