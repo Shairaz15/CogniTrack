@@ -35,15 +35,16 @@ export function Settings() {
                 const userDoc = await getDoc(doc(db, 'users', user.uid));
                 if (userDoc.exists()) {
                     const data = userDoc.data();
+                    const fetchedEmailNotifications = data.preferences?.emailNotifications ?? true;
                     setPreferences({
-                        emailNotifications: data.preferences?.emailNotifications ?? true,
+                        emailNotifications: fetchedEmailNotifications,
                         lastReminderSent: data.preferences?.lastReminderSent?.toDate(),
                     });
-                }
-                // Also sync with localStorage for the email service
-                const localPrefs = getEmailPreferences();
-                if (user.email && !localPrefs.email) {
-                    saveEmailPreferences(preferences.emailNotifications, user.email);
+                    // Also sync with localStorage for the email service
+                    const localPrefs = getEmailPreferences();
+                    if (user.email && !localPrefs.email) {
+                        saveEmailPreferences(fetchedEmailNotifications, user.email);
+                    }
                 }
             } catch (error) {
                 console.error('Error loading preferences:', error);

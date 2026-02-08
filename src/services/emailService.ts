@@ -16,6 +16,10 @@ const PUBLIC_KEY = import.meta.env.VITE_EMAILJS_PUBLIC_KEY || '';
 const SERVICE_ID = import.meta.env.VITE_EMAILJS_SERVICE_ID || '';
 const TEMPLATE_ID = import.meta.env.VITE_EMAILJS_TEMPLATE_ID || '';
 
+// Assessment URL - configurable via env or fallback to origin
+const ASSESSMENT_URL = import.meta.env.VITE_ASSESSMENT_URL ||
+    (typeof window !== 'undefined' ? `${window.location.origin}/tests` : 'https://biomed-rho.vercel.app/tests');
+
 // Initialize EmailJS
 if (PUBLIC_KEY) {
     emailjs.init(PUBLIC_KEY);
@@ -28,11 +32,26 @@ export interface ReminderEmailParams {
 }
 
 /**
+ * Validate email format
+ */
+function isValidEmail(email: string | undefined | null): email is string {
+    if (!email || typeof email !== 'string') return false;
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email.trim());
+}
+
+/**
  * Send a weekly assessment reminder email
  */
 export async function sendWeeklyReminder(params: ReminderEmailParams): Promise<boolean> {
     if (!PUBLIC_KEY || !SERVICE_ID || !TEMPLATE_ID) {
         console.warn('EmailJS not configured. Set VITE_EMAILJS_* env variables.');
+        return false;
+    }
+
+    // Validate email before sending
+    if (!isValidEmail(params.toEmail)) {
+        console.warn('Invalid or missing email address, skipping reminder:', params.toEmail);
         return false;
     }
 
@@ -43,7 +62,7 @@ export async function sendWeeklyReminder(params: ReminderEmailParams): Promise<b
             days_since: params.daysSinceLastAssessment,
             message: `It's been ${params.daysSinceLastAssessment} days since your last cognitive assessment. Regular tracking helps identify trends early. Take a quick assessment today!`,
             app_name: 'CogniTrack',
-            assessment_link: 'https://biomed-rho.vercel.app/tests',
+            assessment_link: ASSESSMENT_URL,
         };
 
         const response = await emailjs.send(SERVICE_ID, TEMPLATE_ID, templateParams);
@@ -72,13 +91,30 @@ const STORAGE_KEYS = {
 };
 
 /**
+ * Safely parse a date string, returning null if invalid
+ */
+function parseValidDate(dateStr: string | null): Date | null {
+    if (!dateStr) return null;
+    try {
+        const date = new Date(dateStr);
+        // Check if date is valid by testing getTime() for NaN
+        if (isNaN(date.getTime())) {
+            return null;
+        }
+        return date;
+    } catch {
+        return null;
+    }
+}
+
+/**
  * Get email reminder preferences from localStorage
  */
 export function getEmailPreferences(): { enabled: boolean; email: string; lastSent: Date | null } {
     const enabled = localStorage.getItem(STORAGE_KEYS.REMINDERS_ENABLED) === 'true';
     const email = localStorage.getItem(STORAGE_KEYS.USER_EMAIL) || '';
     const lastSentStr = localStorage.getItem(STORAGE_KEYS.LAST_REMINDER_SENT);
-    const lastSent = lastSentStr ? new Date(lastSentStr) : null;
+    const lastSent = parseValidDate(lastSentStr);
 
     return { enabled, email, lastSent };
 }
@@ -125,3 +161,8 @@ export function getDaysSinceAssessment(lastAssessmentDate: Date | null): number 
     if (!lastAssessmentDate) return 0;
     return Math.floor((Date.now() - lastAssessmentDate.getTime()) / (1000 * 60 * 60 * 24));
 }
+
+/**
+ * Validate email format (exported for use in other modules)
+ */
+export { isValidEmail };

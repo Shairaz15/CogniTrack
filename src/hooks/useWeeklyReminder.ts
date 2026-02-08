@@ -11,12 +11,48 @@ import {
     isEmailConfigured,
     getEmailPreferences,
     recordReminderSent,
-    getDaysSinceAssessment
+    getDaysSinceAssessment,
+    isValidEmail
 } from '../services/emailService';
 import { STORAGE_KEYS } from './useTestResults';
 
 const STORAGE_KEY_LAST_REMINDER = 'cognitrack_last_reminder_sent';
-const STORAGE_KEY_FIRST_TEST_DATE = 'cognitrack_first_test_date';
+
+/**
+ * Helper: Safely parse the latest date from a localStorage JSON string
+ * Returns Date if valid, null otherwise
+ */
+function parseLatestDateFrom(storageString: string | null): Date | null {
+    if (!storageString) return null;
+
+    try {
+        const parsed = JSON.parse(storageString);
+
+        // Validate parsed value is an array
+        if (!Array.isArray(parsed) || parsed.length === 0) {
+            return null;
+        }
+
+        // Get the last item
+        const lastItem = parsed[parsed.length - 1];
+
+        // Validate timestamp exists and is string or number
+        if (!lastItem || (typeof lastItem.timestamp !== 'string' && typeof lastItem.timestamp !== 'number')) {
+            return null;
+        }
+
+        // Convert to Date and validate
+        const date = new Date(lastItem.timestamp);
+        if (isNaN(date.getTime())) {
+            return null;
+        }
+
+        return date;
+    } catch {
+        // JSON parse failed or other error
+        return null;
+    }
+}
 
 export function useWeeklyReminder() {
     const { user } = useAuth();
@@ -50,46 +86,28 @@ export function useWeeklyReminder() {
                 return;
             }
 
-            // 4. Get last assessment date
-            const getLastAssessmentDate = (): Date | null => {
-                const dates: Date[] = [];
+            // 4. Get last assessment date using the helper function
+            const dates: Date[] = [];
 
-                try {
-                    if (hasReactionTests) {
-                        const results = JSON.parse(hasReactionTests);
-                        if (results.length > 0) {
-                            dates.push(new Date(results[results.length - 1].timestamp));
-                        }
-                    }
-                    if (hasMemoryTests) {
-                        const results = JSON.parse(hasMemoryTests);
-                        if (results.length > 0) {
-                            dates.push(new Date(results[results.length - 1].timestamp));
-                        }
-                    }
-                    if (hasPatternTests) {
-                        const results = JSON.parse(hasPatternTests);
-                        if (results.length > 0) {
-                            dates.push(new Date(results[results.length - 1].timestamp));
-                        }
-                    }
-                    if (hasLanguageTests) {
-                        const results = JSON.parse(hasLanguageTests);
-                        if (results.length > 0) {
-                            dates.push(new Date(results[results.length - 1].timestamp));
-                        }
-                    }
-                } catch (e) {
-                    console.error('Error parsing test dates:', e);
-                }
+            const reactionDate = parseLatestDateFrom(hasReactionTests);
+            if (reactionDate) dates.push(reactionDate);
 
-                if (dates.length === 0) return null;
-                return dates.sort((a, b) => b.getTime() - a.getTime())[0]; // Most recent
-            };
+            const memoryDate = parseLatestDateFrom(hasMemoryTests);
+            if (memoryDate) dates.push(memoryDate);
 
-            const lastAssessment = getLastAssessmentDate();
-            if (!lastAssessment) return;
+            const patternDate = parseLatestDateFrom(hasPatternTests);
+            if (patternDate) dates.push(patternDate);
 
+            const languageDate = parseLatestDateFrom(hasLanguageTests);
+            if (languageDate) dates.push(languageDate);
+
+            if (dates.length === 0) {
+                console.log('No valid test dates found');
+                return;
+            }
+
+            // Get most recent date
+            const lastAssessment = dates.sort((a, b) => b.getTime() - a.getTime())[0];
             const daysSinceLast = getDaysSinceAssessment(lastAssessment);
 
             // 5. Only send if more than 7 days since last assessment
@@ -101,21 +119,34 @@ export function useWeeklyReminder() {
             // 6. Check if we already sent a reminder today
             const lastReminderStr = localStorage.getItem(STORAGE_KEY_LAST_REMINDER);
             if (lastReminderStr) {
-                const lastReminderDate = new Date(lastReminderStr);
-                const today = new Date().toDateString();
-                if (lastReminderDate.toDateString() === today) {
-                    console.log('Already sent reminder today');
-                    return;
+                try {
+                    const lastReminderDate = new Date(lastReminderStr);
+                    if (!isNaN(lastReminderDate.getTime())) {
+                        const today = new Date().toDateString();
+                        if (lastReminderDate.toDateString() === today) {
+                            console.log('Already sent reminder today');
+                            return;
+                        }
+                    }
+                } catch {
+                    // Invalid date, continue to send
                 }
             }
 
-            // 7. Send the email reminder
+            // 7. Validate email before sending
+            const recipientEmail = user.email || prefs.email;
+            if (!isValidEmail(recipientEmail)) {
+                console.warn('No valid email address available for reminder, skipping');
+                return;
+            }
+
+            // 8. Send the email reminder
             console.log(`Sending weekly reminder - ${daysSinceLast} days since last assessment`);
 
             try {
                 const success = await sendWeeklyReminder({
                     toName: user.displayName || 'there',
-                    toEmail: user.email || prefs.email,
+                    toEmail: recipientEmail,
                     daysSinceLastAssessment: daysSinceLast,
                 });
 
