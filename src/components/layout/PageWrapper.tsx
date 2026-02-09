@@ -28,9 +28,11 @@ export function PageWrapper({
                 <header className="page-header">
                     <div className="container">
                         <a href="/" className="logo">
-                            <span className="logo-icon">
-                                <Icon name="brain-circuit" size={20} />
-                            </span>
+                            <img
+                                src="/logo.png"
+                                alt="CogniTrack Logo"
+                                className="logo-img"
+                            />
                             <span className="logo-text">
                                 Cogni<span className="text-gradient">Track</span>
                             </span>
