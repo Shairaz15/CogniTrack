@@ -157,3 +157,16 @@
         transform: none !important;
     }
 }
+
+/* ===== Mobile Touch Ergonomics ===== */
+.btn {
+    min-height: 44px;
+}
+
+@media (max-width: 640px) {
+    .btn-lg {
+        padding: var(--spacing-md) var(--spacing-xl);
+        font-size: var(--font-size-base);
+        width: 100%;
+    }
+}

@@ -62,10 +62,10 @@
     --font-size-lg: 1.125rem;
     --font-size-xl: 1.25rem;
     --font-size-2xl: 1.5rem;
-    --font-size-3xl: 2rem;
-    --font-size-4xl: 2.5rem;
-    --font-size-5xl: 3.5rem;
-    --font-size-hero: 4rem;
+    --font-size-3xl: clamp(1.75rem, 4vw, 2rem);
+    --font-size-4xl: clamp(2rem, 5vw, 2.5rem);
+    --font-size-5xl: clamp(2.5rem, 6vw, 3.5rem);
+    --font-size-hero: clamp(2.5rem, 7vw, 4rem);
 
     --font-weight-light: 300;
     --font-weight-normal: 400;
@@ -276,6 +276,7 @@ html {
     font-size: 16px;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    overflow-x: hidden;
 }
 
 body {
@@ -602,19 +603,5 @@ a:focus-visible {
 }
 
 /* ===== Responsive Typography ===== */
-@media (max-width: 768px) {
-    :root {
-        --font-size-5xl: 2.5rem;
-        --font-size-4xl: 2rem;
-        --font-size-3xl: 1.75rem;
-        --font-size-hero: 2.5rem;
-    }
-
-    h1 {
-        font-size: var(--font-size-3xl);
-    }
-
-    h2 {
-        font-size: var(--font-size-2xl);
-    }
-}
+/* Fluid typography via clamp() in :root — no breakpoint overrides needed.
+   Headings inherit fluid sizing from CSS custom properties. */

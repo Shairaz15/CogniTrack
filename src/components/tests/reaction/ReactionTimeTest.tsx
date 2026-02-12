@@ -202,7 +202,7 @@ export function ReactionTimeTest() {
                 >
                     <div className="reaction-content">
                         {/* Progress indicator */}
-                        {state !== "idle" && (
+                        {state !== "idle" && state !== "test_complete" && (
                             <div className="reaction-progress">
                                 <span className="round-indicator">
                                     Round {Math.min(roundIndex + 1, config.totalRounds)} of {config.totalRounds}
@@ -219,7 +219,7 @@ export function ReactionTimeTest() {
                         )}
 
                         {/* Reaction time display */}
-                        {currentReactionTime !== null && (
+                        {currentReactionTime !== null && state !== "test_complete" && (
                             <div className="reaction-time-display">
                                 <span className="time-value">{currentReactionTime}</span>
                                 <span className="time-unit">ms</span>
@@ -284,12 +284,61 @@ export function ReactionTimeTest() {
                                     {/* Inner header removed here */}
 
                                     {(() => {
-                                        const validRounds = rounds.filter((r) => !r.isCalibration && !r.isFalseStart && !r.isTimeout);
+                                        const testRounds = rounds.filter((r) => !r.isCalibration);
+                                        const validRounds = testRounds.filter((r) => !r.isFalseStart && !r.isTimeout);
+                                        const falseStarts = testRounds.filter((r) => r.isFalseStart).length;
+                                        const timeouts = testRounds.filter((r) => r.isTimeout).length;
+                                        const invalidCount = falseStarts + timeouts;
+                                        const tooManyInvalid = validRounds.length === 0 || invalidCount > testRounds.length / 2;
+
+                                        if (tooManyInvalid && validRounds.length === 0) {
+                                            // No valid rounds at all
+                                            return (
+                                                <>
+                                                    <div className="result-metrics-grid">
+                                                        <div className="result-metric">
+                                                            <span className="metric-label">False Starts</span>
+                                                            <span className="metric-value">{falseStarts}</span>
+                                                        </div>
+                                                        <div className="result-metric">
+                                                            <span className="metric-label">Timeouts</span>
+                                                            <span className="metric-value">{timeouts}</span>
+                                                        </div>
+                                                    </div>
+                                                    <div className="feedback-section">
+                                                        <h3 className="feedback-title text-danger">Too Many Invalid Responses</h3>
+                                                        <p className="feedback-message">No valid responses were recorded. Please retry the assessment and wait for the color change before clicking.</p>
+                                                    </div>
+                                                </>
+                                            );
+                                        }
+
                                         const avgTime = Math.round(validRounds.reduce((a, b) => a + (b.reactionTime || 0), 0) / validRounds.length);
                                         const fastestTime = Math.min(...validRounds.map(r => r.reactionTime || 9999));
-                                        const feedback = getReactionFeedback(avgTime);
 
-                                        // Map feedback color to CSS class
+                                        if (tooManyInvalid) {
+                                            // Some valid rounds but majority invalid
+                                            return (
+                                                <>
+                                                    <div className="result-metrics-grid">
+                                                        <div className="result-metric primary-metric">
+                                                            <span className="metric-label">Fastest Response</span>
+                                                            <span className="metric-value">{fastestTime} <span className="unit">ms</span></span>
+                                                        </div>
+                                                        <div className="result-metric">
+                                                            <span className="metric-label">False Starts</span>
+                                                            <span className="metric-value">{falseStarts}</span>
+                                                        </div>
+                                                    </div>
+                                                    <div className="feedback-section">
+                                                        <h3 className="feedback-title text-warning">Too Many False Responses</h3>
+                                                        <p className="feedback-message">Most rounds had false starts or timeouts. Results may not be reliable — consider retrying.</p>
+                                                    </div>
+                                                </>
+                                            );
+                                        }
+
+                                        const feedback = getReactionFeedback(avgTime);
                                         const colorClass = `text-${feedback.color}`;
 
                                         return (
