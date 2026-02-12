@@ -6,5 +6,6 @@ export type { IconName } from "./Icon";
 export { GoogleSignInButton } from "./GoogleSignInButton";
 export { ProtectedRoute } from "./ProtectedRoute";
 export { AdminRoute } from "./AdminRoute";
+export { AuthOverlay } from "./AuthOverlay";
 export { UserMenu } from "./UserMenu";
 

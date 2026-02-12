@@ -1,0 +1,158 @@
+/* ===== Auth Overlay Styles ===== */
+/* Glassmorphism sign-in modal that blocks test interaction */
+
+.auth-overlay-wrapper {
+    position: relative;
+    min-height: 100vh;
+}
+
+/* Background content — visible but non-interactive */
+.auth-overlay-background {
+    pointer-events: none;
+    user-select: none;
+    filter: blur(2px);
+    opacity: 0.4;
+}
+
+/* Full-viewport overlay */
+.auth-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    animation: authOverlayFadeIn 0.4s ease-out;
+    padding: var(--spacing-lg);
+}
+
+/* Modal card */
+.auth-overlay-card {
+    background: var(--glass-bg, rgba(255, 255, 255, 0.06));
+    border: 1px solid var(--glass-border, rgba(255, 255, 255, 0.1));
+    border-radius: var(--radius-2xl, 20px);
+    padding: var(--spacing-3xl, 48px) var(--spacing-2xl, 32px);
+    max-width: 420px;
+    width: 100%;
+    text-align: center;
+    box-shadow:
+        0 8px 32px rgba(0, 0, 0, 0.4),
+        0 0 0 1px rgba(255, 255, 255, 0.05) inset;
+    animation: authCardSlideUp 0.5s ease-out;
+}
+
+/* Lock icon */
+.auth-overlay-icon {
+    font-size: 3rem;
+    margin-bottom: var(--spacing-lg, 24px);
+    animation: authIconPulse 2s ease-in-out infinite;
+}
+
+/* Title */
+.auth-overlay-title {
+    font-size: var(--font-size-2xl, 1.5rem);
+    font-weight: var(--font-weight-bold, 700);
+    color: var(--color-text-primary, #f1f5f9);
+    margin: 0 0 var(--spacing-md, 16px);
+}
+
+/* Message */
+.auth-overlay-message {
+    font-size: var(--font-size-sm, 0.875rem);
+    color: var(--color-text-secondary, #94a3b8);
+    line-height: var(--line-height-relaxed, 1.7);
+    margin: 0 0 var(--spacing-xl, 24px);
+}
+
+/* Center the Google sign-in button */
+.auth-overlay-card .google-signin-container {
+    display: flex;
+    justify-content: center;
+    margin-bottom: var(--spacing-lg, 24px);
+}
+
+/* Error message */
+.auth-overlay-error {
+    font-size: var(--font-size-xs, 0.75rem);
+    color: #f87171;
+    margin: 0 0 var(--spacing-md, 16px);
+    padding: var(--spacing-sm, 8px) var(--spacing-md, 16px);
+    background: rgba(248, 113, 113, 0.1);
+    border-radius: var(--radius-md, 12px);
+    border: 1px solid rgba(248, 113, 113, 0.2);
+}
+
+/* Go back button */
+.auth-overlay-back {
+    background: none;
+    border: none;
+    color: var(--color-text-muted, #64748b);
+    font-size: var(--font-size-sm, 0.875rem);
+    cursor: pointer;
+    padding: var(--spacing-sm, 8px) var(--spacing-md, 16px);
+    border-radius: var(--radius-md, 12px);
+    transition: all 0.2s ease;
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+}
+
+.auth-overlay-back:hover {
+    color: var(--color-text-secondary, #94a3b8);
+    background: rgba(255, 255, 255, 0.05);
+}
+
+/* ===== Animations ===== */
+@keyframes authOverlayFadeIn {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes authCardSlideUp {
+    from {
+        opacity: 0;
+        transform: translateY(24px) scale(0.96);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+@keyframes authIconPulse {
+
+    0%,
+    100% {
+        transform: scale(1);
+    }
+
+    50% {
+        transform: scale(1.08);
+    }
+}
+
+/* ===== Responsive ===== */
+@media (max-width: 480px) {
+    .auth-overlay-card {
+        padding: var(--spacing-2xl, 32px) var(--spacing-lg, 24px);
+        max-width: 90%;
+        border-radius: var(--radius-xl, 16px);
+    }
+
+    .auth-overlay-icon {
+        font-size: 2.5rem;
+    }
+
+    .auth-overlay-title {
+        font-size: var(--font-size-xl, 1.25rem);
+    }
+}

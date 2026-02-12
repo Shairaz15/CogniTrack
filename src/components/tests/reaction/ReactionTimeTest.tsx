@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "../../../contexts/AuthContext";
 import { Button } from "../../common";
 import type { ReactionState, RoundResult } from "./reactionLogic";
 import {
@@ -17,6 +18,7 @@ import { PageWrapper } from "../../layout";
 
 export function ReactionTimeTest() {
     const navigate = useNavigate();
+    const { isAuthenticated } = useAuth();
     const [state, setState] = useState<ReactionState>("idle");
     const [roundIndex, setRoundIndex] = useState(0);
     const [rounds, setRounds] = useState<RoundResult[]>([]);
@@ -39,9 +41,10 @@ export function ReactionTimeTest() {
 
     // Start the test
     const handleStart = useCallback(() => {
+        if (!isAuthenticated) return;
         setState("instructions");
         setMessage(STATE_MESSAGES.instructions);
-    }, []);
+    }, [isAuthenticated]);
 
     // Begin a round (wait phase)
     const startRound = useCallback(() => {
