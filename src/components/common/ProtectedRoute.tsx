@@ -1,10 +1,11 @@
 /**
  * Protected Route Component
- * Redirects unauthenticated users to landing page.
+ * Shows AuthOverlay sign-in modal for unauthenticated users instead of redirecting.
+ * Children are rendered but blocked from interaction while overlay is visible.
  */
 
-import { Navigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
+import { AuthOverlay } from './AuthOverlay';
 
 interface ProtectedRouteProps {
     children: React.ReactNode;
@@ -23,7 +24,11 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
     }
 
     if (!isAuthenticated) {
-        return <Navigate to="/" replace />;
+        return (
+            <AuthOverlay>
+                {children}
+            </AuthOverlay>
+        );
     }
 
     return <>{children}</>;

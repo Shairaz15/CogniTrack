@@ -7,6 +7,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
 import { Card, Button } from '../components/common';
 import { PageWrapper } from '../components/layout';
 import { selectRandomWords } from '../data/wordPools';
@@ -24,6 +25,7 @@ const RECALL_DURATION = 45000; // 45 seconds max
 
 export function MemoryAssessment() {
     const navigate = useNavigate();
+    const { isAuthenticated } = useAuth();
 
     // Phase management
     const [phase, setPhase] = useState<AssessmentPhase>('instructions');
@@ -53,11 +55,12 @@ export function MemoryAssessment() {
 
     // Initialize words when starting encoding
     const startEncoding = useCallback(() => {
+        if (!isAuthenticated) return;
         const { words } = selectRandomWords(WORD_COUNT);
         setPresentedWords(words);
         setCurrentWordIndex(0);
         setPhase('encoding');
-    }, []);
+    }, [isAuthenticated]);
 
     // Encoding phase: cycle through words
     useEffect(() => {

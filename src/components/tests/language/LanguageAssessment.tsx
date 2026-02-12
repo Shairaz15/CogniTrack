@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "../../../contexts/AuthContext";
 import { PageWrapper } from "../../layout/PageWrapper";
 import { Button, Card } from "../../common";
 import { useLanguageResults } from "../../../hooks/useTestResults";
@@ -33,6 +34,7 @@ const PROMPTS = [
 
 export function LanguageAssessment() {
     const navigate = useNavigate();
+    const { isAuthenticated } = useAuth();
     const { saveResult } = useLanguageResults();
 
     // State
@@ -75,6 +77,7 @@ export function LanguageAssessment() {
 
     // Initialize Speech Recognition
     const startRecording = () => {
+        if (!isAuthenticated) return;
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
 
         if (!SpeechRecognition) {

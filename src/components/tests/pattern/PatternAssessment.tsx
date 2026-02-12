@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "../../../contexts/AuthContext";
 import { Button } from "../../common";
 import { PageWrapper } from "../../layout";
 import { usePatternResults } from "../../../hooks/useTestResults";
@@ -13,6 +14,7 @@ type GameState = 'idle' | 'showing' | 'waiting';
 
 export function PatternAssessment() {
     const navigate = useNavigate();
+    const { isAuthenticated } = useAuth();
     const { saveResult } = usePatternResults();
 
     // Core State
@@ -50,6 +52,7 @@ export function PatternAssessment() {
 
     // Initialize Round
     const startRound = useCallback(() => {
+        if (!isAuthenticated) return;
         const size = getGridSize(level);
         setGridSize(size);
         const length = getSequenceLength(level);
@@ -90,7 +93,7 @@ export function PatternAssessment() {
             i++;
         }, speed);
 
-    }, [level]);
+    }, [level, isAuthenticated]);
 
     // Handle Tile Click
     const handleTileClick = (index: number) => {
