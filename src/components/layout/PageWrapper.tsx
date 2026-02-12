@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { useLocation } from "react-router-dom";
 import { Icon, UserMenu, GoogleSignInButton } from "../common";
 import { useAuth } from "../../contexts/AuthContext";
@@ -18,6 +18,11 @@ export function PageWrapper({
 }: PageWrapperProps) {
     const location = useLocation();
     const currentPath = location.pathname;
+
+    // Scroll to top on route change so the page always starts at the top
+    useEffect(() => {
+        window.scrollTo(0, 0);
+    }, [currentPath]);
     const { isAuthenticated, loading } = useAuth();
 
     const isActive = (path: string) => currentPath === path;
