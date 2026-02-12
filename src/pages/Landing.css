@@ -511,7 +511,7 @@
 .features-section {
     position: relative;
     z-index: 1;
-    padding: var(--spacing-4xl) var(--spacing-lg);
+    padding: var(--spacing-4xl) var(--spacing-lg) var(--spacing-lg);
 }
 
 .features-grid {
@@ -574,7 +574,7 @@
 .trust-section {
     position: relative;
     z-index: 1;
-    padding: var(--spacing-3xl) var(--spacing-lg);
+    padding: 0 var(--spacing-lg) var(--spacing-3xl);
 }
 
 .trust-grid {
@@ -585,24 +585,25 @@
 
 .trust-card {
     text-align: center;
-    padding: var(--spacing-xl);
+    padding: var(--spacing-2xl) var(--spacing-xl);
 }
 
 .trust-icon {
     display: flex;
     align-items: center;
     justify-content: center;
-    margin-bottom: var(--spacing-md);
+    margin-bottom: var(--spacing-lg);
     color: var(--color-accent);
+    font-size: 1.25em;
 }
 
 .trust-card h4 {
-    font-size: var(--font-size-base);
+    font-size: var(--font-size-lg);
     margin-bottom: var(--spacing-sm);
 }
 
 .trust-card p {
-    font-size: var(--font-size-sm);
+    font-size: var(--font-size-base);
     color: var(--color-text-muted);
     margin: 0;
 }

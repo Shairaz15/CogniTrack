@@ -372,7 +372,7 @@ export function Landing() {
                     </div>
                 </div>
 
-                <div className="section-header animate-fadeInUp" style={{ marginTop: '1rem' }}>
+                <div className="section-header animate-fadeInUp" style={{ marginTop: '1rem', marginBottom: 0 }}>
                     <span className="section-badge">Features</span>
                 </div>
             </section>
