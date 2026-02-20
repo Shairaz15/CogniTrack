@@ -100,15 +100,7 @@ export function Tests() {
                             floating
                             className={`test-card animate-fadeInUp delay-${(index + 1) * 100} ${selectedTest === test.id ? "selected" : ""}`}
                             onClick={() => setSelectedTest(test.id)}
-                            role="button"
-                            tabIndex={0}
-                            aria-label={`${test.title} test - ${test.description}. Duration: ${test.duration}`}
-                            onKeyDown={(e) => {
-                                if (e.key === 'Enter' || e.key === ' ') {
-                                    e.preventDefault();
-                                    setSelectedTest(test.id);
-                                }
-                            }}
+                            ariaLabel={`${test.title} test - ${test.description}. Duration: ${test.duration}`}
                         >
                             <div className="test-icon-wrapper">
                                 <Icon name={test.iconName} size={36} animated />

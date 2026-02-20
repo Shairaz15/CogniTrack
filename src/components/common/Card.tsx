@@ -6,9 +6,11 @@ interface CardProps {
     className?: string;
     onClick?: () => void;
     floating?: boolean;
+    /** Accessible label for the card when used as a button (e.g. for screen readers) */
+    ariaLabel?: string;
 }
 
-export function Card({ children, className = "", onClick, floating = false }: CardProps) {
+export function Card({ children, className = "", onClick, floating = false, ariaLabel }: CardProps) {
     const cardRef = useRef<HTMLDivElement>(null);
 
     // Spotlight border effect - track mouse position
@@ -37,6 +39,7 @@ export function Card({ children, className = "", onClick, floating = false }: Ca
             onKeyDown={handleKeyDown}
             role={onClick ? "button" : undefined}
             tabIndex={onClick ? 0 : undefined}
+            aria-label={ariaLabel}
         >
             {children}
         </div>
