@@ -17,6 +17,7 @@ import { useWeeklyReminder } from "../hooks/useWeeklyReminder";
 import { predictTrend } from "../ml";
 import type { TrendPrediction } from "../ml";
 import type { ReactionTestResult } from "../components/tests/reaction/reactionFeatures";
+import { logger } from "../utils/logger";
 import "./Dashboard.css";
 
 // ... inside Dashboard component ...
@@ -54,7 +55,7 @@ export function Dashboard() {
                 setReactionResults(withDates);
             }
         } catch (error) {
-            console.error("Failed to load reaction results:", error);
+            logger.error("Failed to load reaction results:", error);
         }
     }, []);
 
@@ -96,7 +97,7 @@ export function Dashboard() {
             }
             refreshData();
         } catch (error) {
-            console.error("Failed to save mock data:", error);
+            logger.error("Failed to save mock data:", error);
             alert("Failed to generate mock data.");
         }
     };
@@ -137,7 +138,7 @@ export function Dashboard() {
             }
             refreshData();
         } catch (error) {
-            console.error("Failed to save simulated data:", error);
+            logger.error("Failed to save simulated data:", error);
             alert("Failed to simulate data. Please try again.");
         }
     };
@@ -200,7 +201,7 @@ export function Dashboard() {
                         setMlPrediction(pred);
                     }
                 } catch (err) {
-                    console.error('Error in predictTrend:', err);
+                    logger.error('Error in predictTrend:', err);
                 }
             } else {
                 if (mounted) setMlPrediction(null);

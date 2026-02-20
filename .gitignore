@@ -31,3 +31,8 @@ __pycache__/
 
 # Data
 cognitive_population_data.csv
+
+# Environment variables
+.env
+.env.local
+.env.*.local

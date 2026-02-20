@@ -79,10 +79,14 @@ A central hub for data visualization and health insights.
 *   **Visualization:** Recharts (Responsive data visualization).
 *   **State Management:** React Hooks + Context.
 
-### 5.2. Data & Privacy (Single-Tier Architecture)
-*   **Client-Side Only:** No backend server required for core functionality.
-*   **Storage:** `localStorage` API for persisting data across sessions on the same device.
-*   **Microphone:** Audio is processed in RAM and discarded; no recordings are uploaded to any server (HIPAA compliant by design principle).
+### 5.2. Data & Privacy (Hybrid Architecture)
+*   **Client-Side Assessments:** All cognitive assessments run locally in the browser. Audio processing happens in RAM and is discarded immediately (HIPAA compliant by design).
+*   **Local Storage:** `localStorage` API for persisting data across sessions on the same device (privacy-first default).
+*   **Firebase Integration:** Optional cloud sync via Firebase for:
+    *   **Authentication:** Google OAuth sign-in with role-based access control (user/admin)
+    *   **Data Sync:** Firestore database for cross-device access to assessment history
+    *   **Cloud Functions:** Automated admin role assignment, weekly reminder emails, and metrics aggregation
+*   **Privacy Mode:** Users can operate entirely in "Demo Mode" using localStorage only, or opt into Firebase sync for convenience.
 
 ---
 
@@ -96,11 +100,16 @@ A central hub for data visualization and health insights.
 
 ---
 
-## 7. Future Roadmap (Post-v1)
-*   [ ] **Firebase Integration:** For cloud sync across devices.
-*   [ ] **Clinician Portal:** Allow doctors to view patient dashboards remotely.
-*   [ ] **Eye Tracking:** WebGazer integration for attention heatmaps.
-*   [ ] **Mobile App:** React Native port for better touch interaction.
+## 7. Current Features & Future Roadmap
+
+### Current (v1)
+*   ✅ **Firebase Integration:** Cloud sync across devices, authentication, and admin features
+*   ✅ **Admin Portal:** User management, analytics dashboard, and model monitoring
+
+### Future Roadmap (Post-v1)
+*   [ ] **Clinician Portal:** Allow doctors to view patient dashboards remotely with HIPAA-compliant access controls.
+*   [ ] **Eye Tracking:** WebGazer integration for attention heatmaps and gaze pattern analysis.
+*   [ ] **Mobile App:** React Native port for better touch interaction and native device integration.
 
 ---
 

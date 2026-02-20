@@ -216,6 +216,22 @@ export function ReactionTimeTest() {
                 <div
                     className={`reaction-test ${getBackgroundClass()}`}
                     onClick={["wait", "calibration", "stimulus"].includes(state) ? handleClick : undefined}
+                    role="button"
+                    tabIndex={["wait", "calibration", "stimulus"].includes(state) ? 0 : -1}
+                    aria-label={
+                        state === "wait" || state === "calibration"
+                            ? "Wait for green light, then click as quickly as possible"
+                            : state === "stimulus"
+                            ? "Green light - click now!"
+                            : undefined
+                    }
+                    aria-live="polite"
+                    onKeyDown={(e) => {
+                        if (["wait", "calibration", "stimulus"].includes(state) && (e.key === "Enter" || e.key === " ")) {
+                            e.preventDefault();
+                            handleClick();
+                        }
+                    }}
                 >
                     <div className="reaction-content">
                         {/* Progress indicator */}
@@ -232,7 +248,7 @@ export function ReactionTimeTest() {
 
                         {/* Main message - Hidden during instructions to prevent double header */}
                         {!["idle", "instructions"].includes(state) && (
-                            <h1 className="reaction-message">{message}</h1>
+                            <h1 className="reaction-message" aria-live="assertive">{message}</h1>
                         )}
 
                         {/* Reaction time display */}

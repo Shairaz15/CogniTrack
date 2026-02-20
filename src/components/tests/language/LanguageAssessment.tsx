@@ -243,9 +243,22 @@ export function LanguageAssessment() {
                         </div>
 
                         {!isRecording ? (
-                            <Button onClick={startRecording} className="record-btn">Start Warmup</Button>
+                            <Button 
+                                onClick={startRecording} 
+                                className="record-btn"
+                                aria-label="Start microphone warmup recording"
+                            >
+                                Start Warmup
+                            </Button>
                         ) : (
-                            <Button onClick={stopRecording} variant="secondary" className="stop-btn">Stop & Continue</Button>
+                            <Button 
+                                onClick={stopRecording} 
+                                variant="secondary" 
+                                className="stop-btn"
+                                aria-label="Stop recording and continue"
+                            >
+                                Stop & Continue
+                            </Button>
                         )}
                     </Card>
                 )}
@@ -254,7 +267,9 @@ export function LanguageAssessment() {
                     <Card className="phase-card active-assessment">
                         <div className="phase-badge">Assessment</div>
                         <h2>{prompt}</h2>
-                        <div className="timer">{timer}s</div>
+                        <div className="timer" role="timer" aria-live="polite" aria-label={`Recording time: ${timer} seconds`}>
+                            {timer}s
+                        </div>
 
                         {/* Visualizer Animation */}
                         <div className="visualizer-container">
@@ -272,16 +287,34 @@ export function LanguageAssessment() {
                         </div>
 
                         {/* Live Transcript Display */}
-                        <div className="transcript-box">
+                        <div 
+                            className="transcript-box"
+                            role="log"
+                            aria-live="polite"
+                            aria-label="Speech transcript"
+                        >
                             {transcript || <span className="transcript-placeholder">Your speech will appear here...</span>}
                             <div ref={transcriptEndRef} />
                         </div>
 
                         <div className="controls">
                             {!isRecording ? (
-                                <Button onClick={startRecording} className="record-btn pulse">Start Recording</Button>
+                                <Button 
+                                    onClick={startRecording} 
+                                    className="record-btn pulse"
+                                    aria-label="Start recording your speech response"
+                                >
+                                    Start Recording
+                                </Button>
                             ) : (
-                                <Button onClick={stopRecording} variant="secondary" className="stop-btn">Finish Recording</Button>
+                                <Button 
+                                    onClick={stopRecording} 
+                                    variant="secondary" 
+                                    className="stop-btn"
+                                    aria-label="Finish recording and process results"
+                                >
+                                    Finish Recording
+                                </Button>
                             )}
                         </div>
                         {isRecording && timer < 15 && <p className="text-xs text-secondary mt-2">Try to speak for at least 15 seconds</p>}
@@ -289,8 +322,8 @@ export function LanguageAssessment() {
                 )}
 
                 {phase === 'processing' && (
-                    <div className="processing-state">
-                        <div className="spinner"></div>
+                    <div className="processing-state" role="status" aria-live="polite">
+                        <div className="spinner" aria-hidden="true"></div>
                         <h3>Analyzing Speech Patterns...</h3>
                     </div>
                 )}

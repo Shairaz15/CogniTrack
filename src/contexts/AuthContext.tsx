@@ -15,6 +15,7 @@ import {
 import type { User } from 'firebase/auth';
 import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { auth, googleProvider, db, isFirebaseConfigured } from '../lib/firebase';
+import { logger } from '../utils/logger';
 
 type Role = 'user' | 'admin';
 
@@ -52,16 +53,16 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
                 if (firebaseUser) {
                     try {
-                        // LOCAL ADMIN LIST - Add your email here!
-                        // This grants admin access without needing Cloud Functions
-                        const LOCAL_ADMIN_EMAILS = [
-                            'shairaz102938@gmail.com', // Your admin email
-                            'raviraj.sashank@gmail.com', // Additional admin
-                            // Add more admin emails as needed
-                        ];
+                        // Read admin emails from environment (fallback for local dev)
+                        // For production, prefer using Cloud Functions to set admin role via custom claims
+                        const adminEmailsEnv = import.meta.env.VITE_ADMIN_EMAILS;
+                        const LOCAL_ADMIN_EMAILS = adminEmailsEnv
+                            ? adminEmailsEnv.split(',').map((email: string) => email.trim().toLowerCase())
+                            : []; // Empty array if not set - rely on custom claims only
 
-                        // Check if user is a local admin
-                        const isLocalAdmin = firebaseUser.email &&
+                        // Check if user is a local admin (only if env is configured)
+                        const isLocalAdmin = LOCAL_ADMIN_EMAILS.length > 0 &&
+                            firebaseUser.email &&
                             LOCAL_ADMIN_EMAILS.includes(firebaseUser.email.toLowerCase());
 
                         if (isLocalAdmin) {
@@ -84,9 +85,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
                                 lastActive: serverTimestamp(),
                             },
                             { merge: true }
-                        ).catch(err => console.warn('Failed to update user profile:', err));
+                        ).catch(err => logger.warn('Failed to update user profile:', err));
                     } catch (error) {
-                        console.error('Error loading user data:', error);
+                        logger.error('Error loading user data:', error);
                         setRole('user');
                     }
                 } else {
@@ -102,7 +103,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
     const signInWithGoogle = async () => {
         if (!isFirebaseConfigured()) {
-            console.warn('Firebase not configured. Sign-in disabled.');
+            logger.warn('Firebase not configured. Sign-in disabled.');
             return;
         }
         await signInWithPopup(auth, googleProvider);

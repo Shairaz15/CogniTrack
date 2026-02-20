@@ -15,6 +15,7 @@ import {
     isValidEmail
 } from '../services/emailService';
 import { STORAGE_KEYS } from './useTestResults';
+import { logger } from '../utils/logger';
 
 const STORAGE_KEY_LAST_REMINDER = 'cognitrack_last_reminder_sent';
 
@@ -63,14 +64,14 @@ export function useWeeklyReminder() {
         const checkAndSendReminder = async () => {
             // 1. Check if email is configured
             if (!isEmailConfigured()) {
-                console.log('EmailJS not configured, skipping email reminder');
+                logger.debug('EmailJS not configured, skipping email reminder');
                 return;
             }
 
             // 2. Check user preferences
             const prefs = getEmailPreferences();
             if (!prefs.enabled) {
-                console.log('Email reminders disabled by user');
+                logger.debug('Email reminders disabled by user');
                 return;
             }
 
@@ -82,7 +83,7 @@ export function useWeeklyReminder() {
 
             const hasAnyTests = hasReactionTests || hasMemoryTests || hasPatternTests || hasLanguageTests;
             if (!hasAnyTests) {
-                console.log('No tests taken yet, skipping reminder');
+                logger.debug('No tests taken yet, skipping reminder');
                 return;
             }
 
@@ -102,7 +103,7 @@ export function useWeeklyReminder() {
             if (languageDate) dates.push(languageDate);
 
             if (dates.length === 0) {
-                console.log('No valid test dates found');
+                logger.debug('No valid test dates found');
                 return;
             }
 
@@ -112,7 +113,7 @@ export function useWeeklyReminder() {
 
             // 5. Only send if more than 7 days since last assessment
             if (daysSinceLast < 7) {
-                console.log(`Only ${daysSinceLast} days since last assessment, no reminder needed`);
+                logger.debug(`Only ${daysSinceLast} days since last assessment, no reminder needed`);
                 return;
             }
 
@@ -124,7 +125,7 @@ export function useWeeklyReminder() {
                     if (!isNaN(lastReminderDate.getTime())) {
                         const today = new Date().toDateString();
                         if (lastReminderDate.toDateString() === today) {
-                            console.log('Already sent reminder today');
+                            logger.debug('Already sent reminder today');
                             return;
                         }
                     }
@@ -136,12 +137,12 @@ export function useWeeklyReminder() {
             // 7. Validate email before sending
             const recipientEmail = user.email || prefs.email;
             if (!isValidEmail(recipientEmail)) {
-                console.warn('No valid email address available for reminder, skipping');
+                logger.warn('No valid email address available for reminder, skipping');
                 return;
             }
 
             // 8. Send the email reminder
-            console.log(`Sending weekly reminder - ${daysSinceLast} days since last assessment`);
+            logger.info(`Sending weekly reminder - ${daysSinceLast} days since last assessment`);
 
             try {
                 const success = await sendWeeklyReminder({
@@ -153,7 +154,7 @@ export function useWeeklyReminder() {
                 if (success) {
                     recordReminderSent();
                     localStorage.setItem(STORAGE_KEY_LAST_REMINDER, new Date().toISOString());
-                    console.log('Weekly reminder email sent successfully!');
+                    logger.info('Weekly reminder email sent successfully!');
 
                     // Also show browser notification if supported
                     if ('Notification' in window && Notification.permission === 'granted') {
@@ -165,7 +166,7 @@ export function useWeeklyReminder() {
                     }
                 }
             } catch (error) {
-                console.error('Failed to send weekly reminder:', error);
+                logger.error('Failed to send weekly reminder:', error);
             }
         };
 

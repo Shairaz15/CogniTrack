@@ -205,6 +205,7 @@ export function Landing() {
                                 size="lg"
                                 onClick={handleStart}
                                 disabled={!disclaimerAccepted}
+                                aria-label={disclaimerAccepted ? "Start cognitive assessment" : "Please accept the disclaimer to start assessment"}
                             >
                                 Start Assessment
                             </Button>

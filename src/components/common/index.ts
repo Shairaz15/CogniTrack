@@ -8,4 +8,5 @@ export { ProtectedRoute } from "./ProtectedRoute";
 export { AdminRoute } from "./AdminRoute";
 export { AuthOverlay } from "./AuthOverlay";
 export { UserMenu } from "./UserMenu";
+export { ErrorBoundary } from "./ErrorBoundary";
 

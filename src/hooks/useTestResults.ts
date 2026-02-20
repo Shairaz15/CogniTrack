@@ -8,6 +8,7 @@ import { useState, useEffect, useCallback } from "react";
 import type { ReactionTestResult } from "../components/tests/reaction/reactionFeatures";
 import type { PatternAssessmentResult } from "../types/patternTypes";
 import type { LanguageAssessmentResult } from "../types/languageTypes";
+import { logger } from "../utils/logger";
 
 export const STORAGE_KEYS = {
     reactionResults: "cognitrack_reaction_results",
@@ -51,7 +52,7 @@ export function useLanguageResults() {
                 setResults(withDates);
             }
         } catch (error) {
-            console.error("Failed to load language results:", error);
+            logger.error("Failed to load language results:", error);
         } finally {
             setIsLoading(false);
         }
@@ -64,7 +65,7 @@ export function useLanguageResults() {
             try {
                 localStorage.setItem(STORAGE_KEYS.languageResults, JSON.stringify(updated));
             } catch (error) {
-                console.error("Failed to save language result:", error);
+                logger.error("Failed to save language result:", error);
             }
             return updated;
         });
@@ -115,7 +116,7 @@ export function useReactionResults() {
                 setResults(withDates);
             }
         } catch (error) {
-            console.error("Failed to load reaction results:", error);
+            logger.error("Failed to load reaction results:", error);
         } finally {
             setIsLoading(false);
         }
@@ -147,7 +148,7 @@ export function useReactionResults() {
             try {
                 localStorage.setItem(STORAGE_KEYS.reactionResults, JSON.stringify(updated));
             } catch (error) {
-                console.error("Failed to save reaction result:", error);
+                logger.error("Failed to save reaction result:", error);
             }
             return updated;
         });
@@ -212,7 +213,7 @@ export function useMemoryResults() {
                 setResults(withDates);
             }
         } catch (error) {
-            console.error("Failed to load memory results:", error);
+            logger.error("Failed to load memory results:", error);
         } finally {
             setIsLoading(false);
         }
@@ -244,7 +245,7 @@ export function useMemoryResults() {
             try {
                 localStorage.setItem(STORAGE_KEYS.memoryResults, JSON.stringify(updated));
             } catch (error) {
-                console.error("Failed to save memory result:", error);
+                logger.error("Failed to save memory result:", error);
             }
             return updated;
         });
@@ -284,7 +285,7 @@ export function usePatternResults() {
                 setResults(withDates);
             }
         } catch (error) {
-            console.error("Failed to load pattern results:", error);
+            logger.error("Failed to load pattern results:", error);
         } finally {
             setIsLoading(false);
         }
@@ -297,7 +298,7 @@ export function usePatternResults() {
             try {
                 localStorage.setItem(STORAGE_KEYS.patternResults, JSON.stringify(updated));
             } catch (error) {
-                console.error("Failed to save pattern result:", error);
+                logger.error("Failed to save pattern result:", error);
             }
             return updated;
         });

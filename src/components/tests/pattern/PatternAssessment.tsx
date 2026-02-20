@@ -229,16 +229,21 @@ export function PatternAssessment() {
             if (activeTile === i) className += " active";
             if (feedbackTile?.index === i) className += ` user-${feedbackTile.status}`;
 
+            const row = Math.floor(i / gridSize) + 1;
+            const col = (i % gridSize) + 1;
             tiles.push(
-                <div
+                <button
                     key={i}
                     className={className}
                     onClick={() => handleTileClick(i)}
+                    aria-label={`Grid cell ${row}, ${col} of ${gridSize}x${gridSize}`}
+                    disabled={gameState !== 'waiting'}
+                    aria-pressed={activeTile === i || feedbackTile?.index === i}
                 />
             );
         }
         return (
-            <div className={`grid-container grid-${gridSize}`}>
+            <div className={`grid-container grid-${gridSize}`} role="grid" aria-label={`Pattern grid ${gridSize} by ${gridSize}`}>
                 {tiles}
             </div>
         );
@@ -288,7 +293,12 @@ export function PatternAssessment() {
                             <span>{phase === 'demonstration' ? 'Practice' : phase === 'calibration' ? 'Calibration' : 'Assessment'}</span>
                         </div>
 
-                        <p className={`turn-indicator ${gameState === 'showing' ? 'watch' : 'repeat'}`}>
+                        <p 
+                            className={`turn-indicator ${gameState === 'showing' ? 'watch' : 'repeat'}`}
+                            role="status"
+                            aria-live="polite"
+                            aria-atomic="true"
+                        >
                             {message}
                         </p>
 

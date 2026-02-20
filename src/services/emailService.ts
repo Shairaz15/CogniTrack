@@ -10,6 +10,7 @@
  */
 
 import emailjs from '@emailjs/browser';
+import { logger } from '../utils/logger';
 
 // Initialize EmailJS with your public key
 const PUBLIC_KEY = import.meta.env.VITE_EMAILJS_PUBLIC_KEY || '';
@@ -45,13 +46,13 @@ function isValidEmail(email: string | undefined | null): email is string {
  */
 export async function sendWeeklyReminder(params: ReminderEmailParams): Promise<boolean> {
     if (!PUBLIC_KEY || !SERVICE_ID || !TEMPLATE_ID) {
-        console.warn('EmailJS not configured. Set VITE_EMAILJS_* env variables.');
+        logger.warn('EmailJS not configured. Set VITE_EMAILJS_* env variables.');
         return false;
     }
 
     // Validate email before sending
     if (!isValidEmail(params.toEmail)) {
-        console.warn('Invalid or missing email address, skipping reminder:', params.toEmail);
+        logger.warn('Invalid or missing email address, skipping reminder:', params.toEmail);
         return false;
     }
 
@@ -66,10 +67,10 @@ export async function sendWeeklyReminder(params: ReminderEmailParams): Promise<b
         };
 
         const response = await emailjs.send(SERVICE_ID, TEMPLATE_ID, templateParams);
-        console.log('Reminder email sent:', response.status);
+        logger.info('Reminder email sent:', response.status);
         return response.status === 200;
     } catch (error) {
-        console.error('Failed to send reminder email:', error);
+        logger.error('Failed to send reminder email:', error);
         return false;
     }
 }
