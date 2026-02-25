@@ -1,6 +1,6 @@
 # CogniTrack
 
-CogniTrack is a privacy-first, web-based digital biomarker platform that uses high-frequency, gamified cognitive assessments and client-side AI to detect early signs of cognitive decline through longitudinal trend analysis.
+CogniTrack's a privacy-first, web-based digital biomarker platform that uses high-frequency, gamified cognitive assessments and client-side AI to detect early signs of cognitive decline through longitudinal trend analysis.
 
 ## Features
 
